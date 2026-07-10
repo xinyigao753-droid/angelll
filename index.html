@@ -1304,7 +1304,7 @@
           }
           if(audio){audio.pause();audio.currentTime=0;}
           video.play().catch(function(){});
-          setTimeout(function(){dismissSplash();},30000);
+          setTimeout(function(){dismissSplash();},20000);
         }
         if(startBtn)startBtn.addEventListener('click',function(e){e.stopPropagation();handleStart();});
         if(startOverlay)startOverlay.addEventListener('click',handleStart);
