@@ -1,0 +1,1269 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <title>ANGEL</title>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
+    <style>
+      :root {
+        --ink: rgba(255,255,255,0.97);
+        --ink-2: rgba(255,255,255,0.82);
+        --muted: rgba(255,255,255,0.60);
+        --font: 'Pretendard', -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Helvetica Neue", "PingFang SC", sans-serif;
+        --txt-shadow: 0 1px 8px rgba(0,0,0,0.85), 0 0 24px rgba(0,0,0,0.5);
+        --txt-shadow-sm: 0 1px 5px rgba(0,0,0,0.9), 0 0 12px rgba(0,0,0,0.6);
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+
+      body {
+        height: 100vh; display: grid; place-items: center;
+        background: radial-gradient(ellipse at 30% 40%, #18082e 0%, #080814 55%, #100820 100%);
+        font-family: var(--font); -webkit-font-smoothing: antialiased;
+        overflow: hidden; color: var(--ink);
+      }
+               /* ===== 视频开屏动画 ===== */
+      .boot-splash {
+        position: absolute; inset: 0; z-index: 9999;
+        background: #000;
+        display: flex; align-items: center; justify-content: center;
+        transition: opacity 0.8s ease;
+      }
+      .boot-splash.fade-out { opacity: 0; pointer-events: none; }
+      .boot-splash.hidden { display: none; }
+      .boot-video {
+        width: 75%; height: auto;
+        object-fit: contain;
+        border-radius: 20px;
+      }
+      .boot-skip {
+        position: absolute; bottom: 40px; right: 24px;
+        padding: 8px 18px;
+        background: rgba(255,255,255,0.15);
+        backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.3);
+        border-radius: 20px;
+        color: rgba(255,255,255,0.8);
+        font-size: 12px; font-weight: 500; letter-spacing: 0.5px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        z-index: 10000;
+      }
+      .boot-skip:hover { background: rgba(255,255,255,0.25); }
+      .boot-start-overlay {
+        position: absolute; inset: 0; z-index: 10001;
+        background: #000;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        gap: 20px;
+        cursor: pointer;
+      }
+      .boot-start-overlay.hidden { display: none; }
+      .boot-start-logo {
+        font-size: 28px; color: rgba(255,255,255,0.9);
+        font-family: 'Times New Roman', serif;
+        font-style: italic; letter-spacing: 2px;
+        text-shadow: 0 0 20px rgba(255,255,255,0.3);
+      }
+      .boot-start-btn {
+        padding: 12px 36px;
+        background: rgba(255,255,255,0.1);
+        backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.3);
+        border-radius: 30px;
+        color: rgba(255,255,255,0.8);
+        font-size: 14px; font-weight: 500; letter-spacing: 2px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        animation: btnPulse 2s ease-in-out infinite;
+      }
+      .boot-start-btn:hover { background: rgba(255,255,255,0.2); transform: scale(1.05); }
+      @keyframes btnPulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.2); }
+        50% { box-shadow: 0 0 0 12px rgba(255,255,255,0); }
+      }
+      .boot-start-hint {
+        font-size: 11px; color: rgba(255,255,255,0.4);
+        letter-spacing: 1px;
+      }
+
+          /* ===== Phone Shell ===== */
+      .phone-shell {
+        width: min(100vw, 412px); height: min(100dvh, 860px); min-height: 720px;
+        position: relative; overflow: hidden; border-radius: 52px;
+        background-image: url('https://img.baibai.cv/f/wPPPfv/IMG_1876.JPG');
+        background-size: cover; background-position: center;
+        border: 10px solid #f0f0f0;
+        box-shadow: 0 0 0 1px rgba(0,0,0,0.02), 0 20px 50px rgba(0,0,0,0.1);
+        isolation: isolate;
+      }
+
+      /* 顶部玻璃高光 */
+      .phone-shell::before {
+        content: ''; position: absolute; top: 0; left: 0; right: 0; height: 50%;
+        background: linear-gradient(180deg, rgba(255,255,255,0.10) 0%, transparent 100%);
+        pointer-events: none; z-index: 0; border-radius: 42px 42px 0 0;
+      }
+      @media (max-width: 500px) {
+        .phone-shell { width: 100vw; height: 100dvh; border-radius: 0; border: 0; box-shadow: none; }
+      }
+
+      /* ===== Dynamic Island ===== */
+      .dynamic-island {
+        position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+        width: 108px; height: 28px; background: #0c0614; border-radius: 15px; z-index: 300;
+        transition: all 600ms cubic-bezier(0.175, 0.885, 0.32, 1.1);
+        display: flex; align-items: center; justify-content: center;
+        color: rgba(255,255,255,0.9); font-size: 10px; padding: 0 14px;
+        letter-spacing: 0.5px; font-weight: 400;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04);
+      }
+      .dynamic-island.expanded { width: 80%; height: 40px; border-radius: 20px; }
+      .island-content { opacity: 0; transform: scale(0.9); transition: all 400ms ease; white-space: nowrap; }
+      .dynamic-island.expanded .island-content { opacity: 1; transform: scale(1); }
+
+      /* ===== Status Bar ===== */
+      .status-bar {
+        height: 46px; padding: 16px 28px 0;
+        display: flex; align-items: center; justify-content: space-between;
+        font-size: 13px; font-weight: 600;
+        color: rgba(255,255,255,0.95);
+        letter-spacing: -0.2px; position: relative; z-index: 50;
+        text-shadow: var(--txt-shadow-sm);
+      }
+      .status-right { display: flex; align-items: center; gap: 6px; }
+      .icon-signal { display: inline-flex; align-items: flex-end; gap: 2px; width: 14px; height: 10px; }
+      .icon-signal span { display: inline-block; width: 2px; background: rgba(255,255,255,0.95); border-radius: 0.5px; filter: drop-shadow(0 0 2px rgba(0,0,0,0.8)); }
+      .icon-signal span:nth-child(1) { height: 40%; }
+      .icon-signal span:nth-child(2) { height: 70%; }
+      .icon-signal span:nth-child(3) { height: 100%; }
+      .battery-percent { font-size: 10px; font-weight: 600; margin-right: 3px; }
+      .battery-container { position: relative; display: flex; flex-direction: column; align-items: center; }
+      .icon-battery { width: 20px; height: 10px; border: 1.5px solid rgba(255,255,255,0.95); border-radius: 2px; padding: 1px; display: flex; align-items: center; position: relative; }
+      .icon-battery::after { content: ''; position: absolute; right: -3px; top: 50%; transform: translateY(-50%); width: 1.5px; height: 4px; background: rgba(255,255,255,0.95); border-radius: 0 1px 1px 0; }
+      .battery-core { height: 100%; width: 100%; background: rgba(255,255,255,0.95); border-radius: 1px; transition: width 0.3s, background-color 0.3s; }
+      .battery-core.battery-low { background: #f5a0b0; }
+      .battery-core.battery-charging { background: #98e0c0; }
+      .charging-indicator { display: none; position: absolute; top: -8px; left: 50%; transform: translateX(-50%); width: 10px; height: 10px; }
+      .charging-indicator svg { width: 100%; height: 100%; }
+
+      /* ===== Screen Base ===== */
+      .screen {
+        position: absolute; inset: 0;
+        display: flex; flex-direction: column;
+        transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.5s ease;
+        opacity: 0; pointer-events: none; z-index: 10;
+        background: transparent;
+      }
+      .screen.is-active { opacity: 1; pointer-events: auto; transform: translateY(0) scale(1); }
+
+      /* ===== Lock Screen — 跟随壁纸 ===== */
+      .screen.lock-screen {
+        padding: 110px 32px 40px;
+        justify-content: flex-start; align-items: center;
+        z-index: 40; pointer-events: auto; cursor: pointer;
+        background: transparent; /* 透明，phone-shell壁纸透出 */
+      }
+      /* 深色渐变蒙层 - 让文字清晰可读 */
+      .screen.lock-screen::before {
+        content: ''; position: absolute; inset: 0;
+        background: linear-gradient(
+          180deg,
+          rgba(0,0,0,0.08) 0%,
+          rgba(0,0,0,0.38) 30%,
+          rgba(0,0,0,0.25) 60%,
+          rgba(0,0,0,0.12) 100%
+        );
+        pointer-events: none; z-index: 0;
+      }
+      .screen.lock-screen:not(.is-active) { pointer-events: none; transform: translateY(-100%); opacity: 0; }
+      .lock-time-box {
+        text-align: center; display: flex; flex-direction: column; align-items: center;
+        gap: 8px; position: relative; z-index: 1;
+      }
+      .lock-date {
+        font-size: 16px; font-weight: 400; color: rgba(255,255,255,0.92);
+        letter-spacing: 2px;
+        text-shadow: 0 1px 10px rgba(0,0,0,0.9), 0 0 30px rgba(0,0,0,0.6);
+      }
+      .lock-weather {
+        font-size: 13px; font-weight: 300; color: rgba(255,255,255,0.80);
+        text-shadow: var(--txt-shadow-sm);
+      }
+      .lock-time {
+        font-size: 98px; font-weight: 100; line-height: 0.92;
+        color: #ffffff;
+        letter-spacing: -5px; margin-top: 12px;
+        text-shadow: 0 2px 40px rgba(0,0,0,0.6), 0 0 60px rgba(0,0,0,0.35), 0 0 4px rgba(255,255,255,0.3);
+      }
+      .lock-tap-hint {
+        position: absolute; bottom: 40px; z-index: 1;
+        font-size: 11px; font-weight: 300; color: rgba(255,255,255,0.70);
+        animation: hintPulse 2.5s ease-in-out infinite; letter-spacing: 2.5px;
+        text-shadow: var(--txt-shadow-sm);
+      }
+      @keyframes hintPulse { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }
+
+      /* ===== 锁屏雨滴水珠效果 ===== */
+      .lock-rain-drop {
+        position: absolute; border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
+        background: radial-gradient(
+          ellipse at 35% 30%,
+          rgba(255,255,255,0.85) 0%,
+          rgba(200,230,255,0.45) 35%,
+          rgba(150,200,240,0.20) 70%,
+          transparent 100%
+        );
+        border: 0.5px solid rgba(255,255,255,0.30);
+        pointer-events: none; z-index: 1;
+        animation: dropSlide linear forwards;
+      }
+      @keyframes dropSlide {
+        0% { transform: translateY(-20px) scaleY(0.8); opacity: 0; }
+        10% { opacity: 1; }
+        90% { opacity: 0.7; }
+        100% { transform: translateY(100vh); opacity: 0; }
+      }
+
+      /* ===== Passcode Screen ===== */
+      .screen.passcode-screen {
+        background: rgba(0,0,0,0.35);
+        backdrop-filter: blur(50px) saturate(1.5); -webkit-backdrop-filter: blur(50px) saturate(1.5);
+        justify-content: center; align-items: center; gap: 30px; padding: 40px;
+        transform: translateY(100%); z-index: 30;
+      }
+      .screen.passcode-screen.is-active { transform: translateY(0); }
+      .passcode-title { font-size: 14px; font-weight: 300; color: rgba(255,255,255,0.95); letter-spacing: 3px; text-transform: uppercase; text-shadow: var(--txt-shadow-sm); }
+      .dots-container { display: flex; gap: 22px; }
+      .dot { width: 11px; height: 11px; border: 1.5px solid rgba(255,255,255,0.50); border-radius: 50%; transition: all 0.3s ease; }
+      .dot.filled { background: rgba(255,255,255,0.95); border-color: transparent; animation: dotBounce 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+      @keyframes dotBounce { 0% { transform: scale(0); } 50% { transform: scale(1.4); } 100% { transform: scale(1); } }
+      .keypad { display: grid; grid-template-columns: repeat(3, 70px); gap: 14px 22px; }
+      .key {
+        width: 70px; height: 70px; border-radius: 50%;
+        background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.32);
+        color: rgba(255,255,255,0.97); display: flex; flex-direction: column; align-items: center; justify-content: center;
+        cursor: pointer; font-size: 26px; font-weight: 200;
+        touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        text-shadow: var(--txt-shadow-sm);
+      }
+      .key:hover { background: rgba(255,255,255,0.24); transform: translateY(-1px); }
+      .key-pressed { background: rgba(255,255,255,0.32); transform: scale(0.94); }
+      .key-sub { font-size: 9px; font-weight: 600; opacity: 0.50; margin-top: 3px; letter-spacing: 1.5px; }
+      .keypad-footer { display: flex; width: 240px; justify-content: space-between; }
+      .keypad-footer button { background: none; border: none; cursor: pointer; color: rgba(255,255,255,0.85); font-weight: 500; padding: 12px 18px; border-radius: 12px; transition: all 0.3s ease; letter-spacing: 0.8px; font-size: 13px; text-shadow: var(--txt-shadow-sm); }
+      .keypad-footer button:hover { background: rgba(255,255,255,0.12); }
+
+      /* ===== Home Screen ===== */
+      .screen.home-screen { padding: 50px 0 0 0; justify-content: space-between; overflow: hidden; }
+
+      /* ===== Slider ===== */
+      .slider-viewport-gemini { width: 100%; flex: 1; overflow: hidden; position: relative; }
+      .slider-track-gemini { display: flex; width: 300%; height: 100%; will-change: transform; transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
+      .home-page-gemini { width: 33.333%; height: 100%; display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden; }
+      .home-page-gemini::-webkit-scrollbar { display: none; }
+
+      /* ===== Main Content ===== */
+      .main-content { flex: 1; display: flex; flex-direction: column; gap: 12px; padding: 12px 16px 10px; }
+
+      /* ===== Widget Base ===== */
+      .widget {
+        border: 1px solid rgba(255,255,255,0.48); border-radius: 22px;
+        background: rgba(255,255,255,0.16);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.50);
+        backdrop-filter: blur(24px) saturate(1.4); -webkit-backdrop-filter: blur(24px) saturate(1.4);
+        overflow: hidden; position: relative;
+        transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+      .widget:hover { box-shadow: 0 8px 28px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.60); border-color: rgba(255,255,255,0.65); transform: translateY(-2px); background: rgba(255,255,255,0.22); }
+
+      /* ===== Top Banner ===== */
+      .widget-top-banner { padding: 16px 18px; height: auto; display: flex; align-items: center; gap: 14px; overflow: visible; }
+      .widget-top-banner::after { content: '✦  ✧'; position: absolute; top: 10px; right: 12px; font-size: 8px; color: rgba(255,255,255,0.45); letter-spacing: 4px; animation: sparkleAnim 4s ease-in-out infinite; pointer-events: none; text-shadow: 0 0 8px rgba(255,255,255,0.6); }
+      @keyframes sparkleAnim { 0%,100% { opacity: 0.3; } 50% { opacity: 1; } }
+      .banner-avatar-col { display: flex; flex-direction: column; align-items: center; gap: 5px; flex-shrink: 0; width: 68px; }
+      .banner-avatar-ring { width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, rgba(255,200,224,0.7) 0%, rgba(180,200,255,0.7) 50%, rgba(210,178,255,0.7) 100%); padding: 2.5px; box-shadow: 0 4px 16px rgba(0,0,0,0.25); }
+      .avatar-inner-gemini { width: 100%; height: 100%; border-radius: 50%; background: rgba(255,255,255,0.22); border: 1px solid rgba(255,255,255,0.45); display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; transition: all 0.3s ease; }
+      .avatar-inner-gemini:hover { background: rgba(255,255,255,0.38); }
+      .avatar-plus-icon { font-size: 18px; color: rgba(255,255,255,0.80); font-weight: 100; line-height: 1; }
+      .banner-username { font-size: 9px; font-weight: 500; color: rgba(255,255,255,0.85); letter-spacing: 2.5px; text-transform: uppercase; text-align: center; outline: none; padding: 1px 4px; transition: letter-spacing 0.3s, color 0.3s; text-shadow: var(--txt-shadow-sm); }
+      .banner-username:focus { letter-spacing: 3.5px; color: rgba(255,255,255,1); }
+      .banner-text-col { flex: 1; display: flex; flex-direction: column; gap: 7px; min-width: 0; padding-right: 22px; }
+      .banner-quote { font-size: 11px; font-weight: 400; line-height: 1.72; color: rgba(255,255,255,0.97); font-style: italic; letter-spacing: 0.2px; word-break: keep-all; text-shadow: var(--txt-shadow-sm); }
+      .banner-divider { height: 0.5px; background: linear-gradient(to right, transparent, rgba(255,255,255,0.35), transparent); flex-shrink: 0; }
+      .banner-footer-row { display: flex; align-items: flex-end; justify-content: space-between; }
+      .banner-greeting { font-size: 9px; color: rgba(255,255,255,0.72); letter-spacing: 0.6px; font-weight: 400; text-shadow: var(--txt-shadow-sm); }
+      .banner-date-right { text-align: right; line-height: 1.15; }
+      .banner-date-wd { font-size: 7.5px; color: rgba(255,255,255,0.65); letter-spacing: 1.5px; font-weight: 500; display: block; text-shadow: var(--txt-shadow-sm); }
+      .banner-date-num { font-size: 17px; font-weight: 200; color: rgba(255,255,255,0.97); text-shadow: var(--txt-shadow-sm); }
+
+      /* ===== Widgets Row ===== */
+      .widgets-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+      /* ===== D-Day Widget ===== */
+     .dday-widget-gemini {
+  aspect-ratio: 1; padding: 14px; display: flex; flex-direction: column;
+  justify-content: space-between; cursor: pointer;
+  background: rgba(255,255,255,0.06);
+}
+      /* ===== Clock Widget ===== */
+.widget-clock-gemini {
+  aspect-ratio: 1; display: flex; justify-content: center; align-items: center;
+  background: rgba(255,255,255,0.06); position: relative;
+}
+      /* 外环光晕 */
+      .widget-clock-gemini::before { content: ''; position: absolute; width: 92%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, transparent 60%, rgba(255,255,255,0.06) 100%); box-shadow: 0 0 20px rgba(200,230,200,0.12); pointer-events: none; }
+      .clock-face-gemini {
+        width: 82%; height: 82%;
+        border: 1px solid rgba(255,255,255,0.38);
+        border-radius: 50%; position: relative;
+        background: radial-gradient(circle at 38% 35%, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.03) 50%, transparent 80%);
+        box-shadow: 0 0 0 3px rgba(255,255,255,0.06), inset 0 0 20px rgba(0,0,0,0.08);
+      }
+      .clock-tick-wrapper { position: absolute; inset: 0; border-radius: 50%; }
+      .clock-tick-inner { position: absolute; left: 50%; top: 5%; transform: translateX(-50%); border-radius: 2px; }
+      .clock-num-wrapper { position: absolute; inset: 0; border-radius: 50%; }
+      .clock-num-inner { position: absolute; left: 50%; top: 12%; transform: translateX(-50%); font-size: 7.5px; font-weight: 500; color: rgba(255,255,255,0.68); line-height: 1; text-shadow: var(--txt-shadow-sm); }
+      /* 指针 */
+      .clock-hand-hour-gemini { position: absolute; width: 2.5px; height: 27%; background: rgba(255,255,255,0.97); bottom: 50%; left: 50%; transform-origin: bottom center; transform: translateX(-50%) rotate(0deg); border-radius: 3px 3px 2px 2px; z-index: 5; box-shadow: 0 0 6px rgba(255,255,255,0.5); }
+      .clock-hand-min-gemini { position: absolute; width: 1.5px; height: 37%; background: rgba(255,255,255,0.85); bottom: 50%; left: 50%; transform-origin: bottom center; transform: translateX(-50%) rotate(0deg); border-radius: 2px 2px 1px 1px; z-index: 4; box-shadow: 0 0 4px rgba(255,255,255,0.3); }
+      .clock-hand-sec-gemini { position: absolute; width: 1px; height: 43%; background: linear-gradient(to top, rgba(255,140,160,0.4) 0%, rgba(255,160,180,1) 100%); bottom: 50%; left: 50%; transform-origin: bottom center; transform: translateX(-50%) rotate(0deg); border-radius: 1px; z-index: 6; box-shadow: 0 0 3px rgba(255,140,160,0.6); }
+      /* 秒针反向尾部 */
+      .clock-hand-sec-tail { position: absolute; width: 1px; height: 10%; background: rgba(255,140,160,0.6); top: 50%; left: 50%; transform-origin: top center; transform: translateX(-50%) rotate(0deg); border-radius: 1px; z-index: 6; }
+      .clock-center-gemini { position: absolute; width: 7px; height: 7px; background: rgba(255,255,255,0.97); border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%,-50%); z-index: 10; box-shadow: 0 0 8px rgba(255,255,255,0.7); }
+
+          /* ===== Apps Grid ===== */
+      .apps-grid-gemini { display: grid; grid-template-columns: repeat(4, 1fr); row-gap: 14px; column-gap: 10px; padding: 4px 2px; }
+      .app-item-gemini { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; }
+      .app-label-gemini { 
+        font-size: 10px; 
+        font-weight: 500; 
+        color: rgba(255,255,255,0.88); 
+        text-align: center; 
+        text-shadow: var(--txt-shadow-sm); 
+        max-width: 58px; 
+        overflow: hidden; 
+        text-overflow: ellipsis; 
+        white-space: nowrap; 
+      }
+
+      /* ✨ 提升图标框的通透感 */
+      .app-icon-box-gemini {
+        width: 54px; height: 54px; border-radius: 16px;
+        display: flex; align-items: center; justify-content: center;
+        background-color: rgba(255, 255, 255, 0.25); /* 降低白底，增加透亮感 */
+        backdrop-filter: blur(20px); /* 加强模糊效果 */
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.04), inset 0 1px 3px rgba(255,255,255,0.4);
+        background-size: 70%;
+        background-position: center;
+        background-repeat: no-repeat;
+      }
+
+      /* 6. ✨大组件跨格能力✨ */
+      .apps-grid-gemini { grid-auto-rows: 70px; align-items: start !important; }
+      .widget-4x3 { grid-column: span 4; grid-row: span 3; } /* 保留第二页巨幅海报 */
+      .dday-row-wrap { grid-column: span 4; padding: 5px 0; } /* 专门为 D-DAY 定制的横排防重叠容器 */
+
+      /* ===== Page Indicator ===== */
+      .page-indicator-gemini { display: flex; justify-content: center; gap: 6px; padding: 5px 0 3px; }
+      .dot-gemini { width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,0.35); transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+      .dot-gemini.active { background: rgba(255,255,255,0.96); width: 14px; border-radius: 3px; }
+
+      /* ===== Dock ===== */
+      .dock-bar-gemini { height: 76px; border-radius: 26px; padding: 0 18px; display: flex; justify-content: space-between; align-items: center; margin: 0 18px 8px; background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.46); backdrop-filter: blur(30px) saturate(1.5); -webkit-backdrop-filter: blur(30px) saturate(1.5); box-shadow: 0 8px 32px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.52); }
+      .dock-icon-gemini { width: 52px; height: 52px; border-radius: 15px; background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.45); display: flex; align-items: center; justify-content: center; font-size: 22px; cursor: pointer; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 3px 12px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.75), inset 0 2px 5px rgba(255,255,255,0.32); background-image: radial-gradient(120% 120% at 48% 10%, rgba(255,255,255,0.78) 0%, rgba(255,255,255,0.04) 28%, transparent 55%); }
+      .dock-icon-gemini:hover { transform: translateY(-5px) scale(1.08); }
+      .dock-icon-gemini:active { transform: scale(0.94); }
+
+      /* ===== Bottom Signature ===== */
+      .bottom-signature { text-align: center; font-size: 10px; font-weight: 400; letter-spacing: 2px; color: rgba(255,255,255,0.60); font-style: italic; padding-bottom: 10px; text-shadow: var(--txt-shadow-sm); }
+
+            /* ===== Player Widget (天使唱片机 Angel Edition) ===== */
+      .widget-player { 
+        padding: 18px 18px 16px; 
+        background: rgba(255,255,255,0.65);
+        border: 1px solid rgba(255,255,255,0.95); 
+        border-radius: 28px; 
+        box-shadow: 0 20px 50px rgba(0,0,0,0.04), inset 0 2px 10px rgba(255,255,255,1); 
+        position: relative; overflow: hidden; 
+        backdrop-filter: blur(20px); 
+        -webkit-backdrop-filter: blur(20px); 
+      }
+      /* 顶部小星星装饰 */
+      .widget-player::before { 
+        content: '✦  ✦  ✦'; 
+        position: absolute; top: 12px; left: 16px; 
+        font-size: 8px; color: rgba(160,148,136,0.5); 
+        letter-spacing: 4px; 
+      }
+      .player-heart { 
+        position: absolute; top: 10px; right: 12px; 
+        width: 34px; height: 34px; 
+        border-radius: 50%; 
+        background: rgba(255,255,255,0.9); 
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05), inset 0 1px 2px rgba(255,255,255,1);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 13px; z-index: 2; cursor: pointer;
+      }
+      .player-content { display: flex; gap: 14px; align-items: center; position: relative; z-index: 1; margin-top: 12px; }
+      
+      /* 白色哑光唱片 */
+      .player-cover { 
+        width: 90px; height: 90px; border-radius: 50%; 
+        position: relative; overflow: visible; flex-shrink: 0; 
+        background: radial-gradient(circle at 38% 35%, #ffffff 0%, #e8e4df 50%, #d5d0ca 100%); 
+        box-shadow: 0 12px 30px rgba(0,0,0,0.08), inset 0 2px 8px rgba(255,255,255,0.9), inset 0 -2px 5px rgba(0,0,0,0.04); 
+        animation: spin 14s linear infinite; animation-play-state: paused; 
+      }
+      .player-cover.is-playing { animation-play-state: running; }
+      /* 唱片上的小翅膀 */
+      .player-cover::before { 
+        content: '🪽'; position: absolute; 
+        top: 50%; left: -18px; transform: translateY(-50%) scaleX(-1); 
+        font-size: 18px; filter: grayscale(1) brightness(1.5); opacity: 0.55; 
+        animation: none !important; 
+      }
+      .player-cover::after { 
+        content: '🪽'; position: absolute; 
+        top: 50%; right: -18px; transform: translateY(-50%); 
+        font-size: 18px; filter: grayscale(1) brightness(1.5); opacity: 0.55; 
+        animation: none !important; 
+      }
+      .player-cover-grooves { 
+        position: absolute; inset: 0; border-radius: 50%; 
+        background: repeating-radial-gradient(circle at 50% 50%, rgba(0,0,0,0.015) 0px, rgba(0,0,0,0.015) 1px, transparent 1px, transparent 4px); 
+        z-index: 1; pointer-events: none; 
+      }
+      .player-cover-art { 
+        position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); 
+        width: 40px; height: 40px; border-radius: 50%; 
+        background-size: cover; background-position: center; 
+        background-color: rgba(220,215,210,0.5); 
+        z-index: 2; box-shadow: 0 0 0 2px rgba(255,255,255,0.6), inset 0 0 8px rgba(0,0,0,0.06); 
+        transition: background-image 0.4s ease; 
+      }
+      .player-cover-art.is-empty::after { content: '♡'; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 16px; color: rgba(160,148,136,0.7); }
+      .player-cover-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 7px; height: 7px; background: #ccc; border-radius: 50%; z-index: 3; box-shadow: inset 0 1px 2px rgba(0,0,0,0.1); }
+      
+      .player-info { flex: 1; min-width: 0; }
+      .player-title { font-size: 14px; font-weight: 700; color: #222; word-break: break-word; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.3; text-shadow: none; }
+      .player-artist { font-size: 11px; color: #999; margin-top: 3px; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: none; }
+      
+           /* 圆形按钮组 (陶瓷浮雕风) */
+      .player-compact-controls { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
+      .compact-btn { 
+        background: linear-gradient(145deg, #f5f0eb, #e8e3dd);
+        border: none;
+        border-radius: 50%; width: 36px; height: 36px; 
+        display: grid; place-items: center; cursor: pointer; 
+        transition: all 0.25s ease; 
+        box-shadow: 4px 4px 10px rgba(0,0,0,0.06), -2px -2px 8px rgba(255,255,255,0.9), inset 0 1px 1px rgba(255,255,255,0.7);
+        padding: 0; font-size: 0; 
+      }
+      .compact-btn:hover { transform: scale(1.08); box-shadow: 5px 5px 14px rgba(0,0,0,0.08), -3px -3px 10px rgba(255,255,255,1); }
+      .compact-btn:active { transform: scale(0.92); box-shadow: inset 2px 2px 6px rgba(0,0,0,0.06), inset -1px -1px 4px rgba(255,255,255,0.5); }
+      .compact-btn svg { width: 12px; height: 12px; stroke: #8a7e74; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+      .compact-btn.play-toggle { 
+        width: 46px; height: 46px; 
+        background: linear-gradient(145deg, #e8e2db, #d5cfc8);
+        box-shadow: 5px 5px 14px rgba(0,0,0,0.08), -3px -3px 10px rgba(255,255,255,0.8), inset 0 1px 1px rgba(255,255,255,0.5);
+      }
+      .compact-btn.play-toggle svg { stroke: #5a504a; fill: none; width: 16px; height: 16px; }
+      .compact-btn.play-toggle:hover { transform: scale(1.08); }
+
+            /* 天使装饰带 (去掉emoji，改成极简线条) */
+      .player-wave { 
+        display: flex; align-items: center; justify-content: center; 
+        height: 40px; 
+        margin: 14px -18px 0; 
+        padding: 0 30px;
+        opacity: 1 !important;
+        transition: none;
+        gap: 12px;
+      }
+      .wave-bar { 
+        width: 4px; height: 4px; 
+        background: rgba(180,170,158,0.4); 
+        border-radius: 50%; 
+        animation: none !important;
+      }
+      .wave-bar:nth-child(2), .wave-bar:nth-child(5), .wave-bar:nth-child(8) { 
+        width: 20px; height: 1px; border-radius: 0; background: rgba(180,170,158,0.3); 
+      }
+      .player-wave::before { content: none; }
+      .player-wave::after { content: none; }
+
+      /* 歌词区域 */
+      .lyrics-container { margin-top: 8px; text-align: center; min-height: 20px; display: flex; align-items: center; justify-content: center; }
+      .lyrics-line { font-size: 11px; color: #aaa; font-weight: 400; font-style: italic; transition: all 0.25s ease; max-width: 100%; line-height: 1.5; word-break: break-word; text-shadow: none; }
+      
+      /* 进度条 */
+      .player-progress { margin-top: 10px; padding: 0 2px; }
+      .progress-bar { height: 3px; background: rgba(0,0,0,0.06); border-radius: 3px; overflow: visible; cursor: pointer; position: relative; }
+      .progress-fill { height: 100%; border-radius: 3px; width: 35%; position: relative; transition: width 0.3s ease; background: linear-gradient(to right, #c8b8a8, #d8c8b8); }
+      .progress-fill::after { content: ''; position: absolute; right: -5px; top: 50%; transform: translateY(-50%); width: 11px; height: 11px; background: white; border-radius: 50%; box-shadow: 0 2px 6px rgba(0,0,0,0.12); opacity: 0; transition: opacity 0.2s; }
+      .progress-bar:hover .progress-fill::after { opacity: 1; }
+      .progress-time { display: flex; justify-content: space-between; font-size: 10px; color: #bbb; margin-top: 5px; font-weight: 400; text-shadow: none; }
+      
+            /* 搜索 & 上传区域 (奶油陶瓷风) */
+      .player-upload { margin-top: 14px; }
+      .link-input-area { display: flex; gap: 8px; margin-bottom: 8px; padding: 0; }
+      .link-input { 
+        flex: 1; padding: 10px 14px; 
+        border: 1px solid rgba(0,0,0,0.06); 
+        border-radius: 16px; font-size: 12px; 
+        background: rgba(255,255,255,0.6); 
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        outline: none; color: #333; 
+        transition: all 0.3s ease; 
+        box-shadow: inset 0 2px 5px rgba(0,0,0,0.02);
+      }
+      .link-input:focus { border-color: rgba(180,170,158,0.5); background: rgba(255,255,255,0.8); }
+      .link-input::placeholder { color: #bbb; }
+      .link-add-btn { 
+        padding: 10px 18px; 
+        border: none; 
+        border-radius: 16px; 
+        background: linear-gradient(145deg, #e8e2db, #d5cfc8); 
+        color: #5a504a; 
+        font-size: 12px; font-weight: 600; cursor: pointer; 
+        transition: all 0.25s ease; 
+        white-space: nowrap; 
+        box-shadow: 3px 3px 8px rgba(0,0,0,0.06), -2px -2px 6px rgba(255,255,255,0.8);
+      }
+      .link-add-btn:hover { transform: scale(1.05); box-shadow: 4px 4px 12px rgba(0,0,0,0.08), -2px -2px 8px rgba(255,255,255,1); }
+      .link-add-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+      .player-tip { font-size: 10px; color: #aaa; text-align: center; margin: 4px 0 8px; }
+      .upload-btns { display: flex; gap: 10px; justify-content: center; }
+      .upload-btn { 
+        flex: 1; padding: 10px 0; 
+        border: 1px solid rgba(0,0,0,0.05); 
+        border-radius: 16px; 
+        background: rgba(255,255,255,0.6); 
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        color: #666; font-size: 12px; font-weight: 600; 
+        cursor: pointer; transition: all 0.25s ease; 
+        box-shadow: 0 4px 10px rgba(0,0,0,0.03), inset 0 1px 2px rgba(255,255,255,0.8);
+      }
+      .upload-btn:hover { background: rgba(255,255,255,0.85); transform: scale(1.03); }
+      
+      /* 搜索结果列表 */
+      .search-results { 
+        max-height: 175px; overflow-y: auto; margin: 8px 0 0; 
+        border-radius: 18px; 
+        background: rgba(255,255,255,0.5); 
+        backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(0,0,0,0.04); 
+        display: none; 
+        box-shadow: 0 6px 20px rgba(0,0,0,0.03);
+      }
+      .search-results.has-results { display: block; }
+      .search-result-item { padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: background 0.2s; border-bottom: 1px solid rgba(0,0,0,0.04); }
+      .search-result-item:last-child { border-bottom: none; }
+      .search-result-item:hover { background: rgba(255,255,255,0.4); }
+      .search-result-info { flex: 1; min-width: 0; }
+      .search-result-title { font-size: 12px; font-weight: 600; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: none; }
+      .search-result-artist { font-size: 10.5px; color: #999; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: none; }
+      .search-result-play { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(145deg, #e8e2db, #d5cfc8); color: #5a504a; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 10px; transition: transform 0.3s; flex-shrink: 0; margin-left: 8px; box-shadow: 2px 2px 6px rgba(0,0,0,0.05); }
+      .search-result-play:hover { transform: scale(1.15); }
+      .search-loading { padding: 12px; text-align: center; font-size: 12px; color: #aaa; }
+      .search-no-results { padding: 12px; text-align: center; font-size: 12px; color: #aaa; }
+
+      /* ===== Full Window Panels ===== */
+      .app-full-window { position: absolute; inset: 0; background: rgba(60,40,30,0.86); backdrop-filter: blur(35px) saturate(1.4); -webkit-backdrop-filter: blur(35px) saturate(1.4); z-index: 500; display: flex; flex-direction: column; transform: translateY(100%); transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); padding: 54px 22px 28px; }
+      .app-full-window.is-open { transform: translateY(0); }
+      .app-window-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; }
+      .app-window-title { font-size: 17px; font-weight: 600; color: rgba(255,255,255,0.97); letter-spacing: 0.3px; text-shadow: var(--txt-shadow-sm); }
+      .btn-close-window { background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.32); padding: 8px 18px; border-radius: 16px; font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.95); cursor: pointer; transition: all 0.3s ease; backdrop-filter: blur(10px); }
+      .btn-close-window:hover { background: rgba(255,255,255,0.26); transform: translateY(-2px); }
+      .window-content { flex: 1; overflow-y: auto; padding-right: 2px; }
+      .cute-tab-btns { display: flex; gap: 8px; margin-bottom: 16px; background: rgba(255,255,255,0.10); padding: 5px; border-radius: 13px; }
+      .cute-tab-btns button { flex: 1; padding: 9px; border: 0; border-radius: 9px; font-size: 13px; font-weight: 600; cursor: pointer; background: transparent; color: rgba(255,255,255,0.60); transition: all 0.3s ease; }
+      .cute-tab-btns button.is-active { background: rgba(255,255,255,0.24); color: white; }
+      .input-group { margin-bottom: 15px; }
+      .input-group label { display: block; font-size: 12px; margin-bottom: 7px; font-weight: 600; color: rgba(255,255,255,0.75); letter-spacing: 0.5px; text-shadow: var(--txt-shadow-sm); }
+      .input-group input[type="text"] { width: 100%; padding: 12px 14px; border-radius: 13px; border: 1px solid rgba(255,255,255,0.28); background: rgba(255,255,255,0.12); outline: none; font-size: 13px; color: rgba(255,255,255,0.97); transition: all 0.3s ease; }
+      .input-group input[type="text"]:focus { border-color: rgba(255,170,195,0.60); background: rgba(255,255,255,0.20); }
+      .input-group input[type="text"]::placeholder { color: rgba(255,255,255,0.35); }
+      .color-pick-row { display: flex; align-items: center; gap: 12px; }
+      .color-pick-row input[type="color"] { border: 0; width: 44px; height: 38px; background: transparent; cursor: pointer; }
+      .btn-apply-all { width: 100%; padding: 14px; border-radius: 17px; border: 1px solid rgba(255,170,195,0.52); font-weight: 700; font-size: 14px; cursor: pointer; background: rgba(255,170,195,0.32); color: white; margin-top: 10px; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+      .btn-apply-all:hover { transform: translateY(-2px); background: rgba(255,170,195,0.50); }
+
+      /* ===== Scrollbar ===== */
+      ::-webkit-scrollbar { width: 3px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.20); border-radius: 2px; }
+     /* ===== 自制图标 ===== */
+.app-icon-box-gemini.icon-sprite {
+  font-size: 0 !important;
+  opacity: 1 !important;
+}
+
+/* 对应的 20 张新图片 */
+.icon-app-01 { background-image: url('https://img.baibai.cv/f/negPfp/smartslice_01.png') !important; }
+.icon-app-02 { background-image: url('https://img.baibai.cv/f/Dq1Afe/smartslice_02.png') !important; }
+.icon-app-03 { background-image: url('https://img.baibai.cv/f/2bgzHX/smartslice_03.png') !important; }
+.icon-app-04 { background-image: url('https://img.baibai.cv/f/jYrnuX/smartslice_04.png') !important; }
+.icon-app-05 { background-image: url('https://img.baibai.cv/f/pe5juE/smartslice_05.png') !important; }
+.icon-app-06 { background-image: url('https://img.baibai.cv/f/merEIK/smartslice_06.png') !important; }
+.icon-app-07 { background-image: url('https://img.baibai.cv/f/dLZwFQ/smartslice_07.png') !important; }
+.icon-app-08 { background-image: url('https://img.baibai.cv/f/ArjxSX/smartslice_08.png') !important; }
+.icon-app-09 { background-image: url('https://img.baibai.cv/f/XNA2Hd/smartslice_09.png') !important; }
+.icon-app-10 { background-image: url('https://img.baibai.cv/f/3LORse/smartslice_10.png') !important; }
+.icon-app-11 { background-image: url('https://img.baibai.cv/f/YP2Yty/smartslice_11.png') !important; }
+.icon-app-12 { background-image: url('https://img.baibai.cv/f/gV18SG/smartslice_12.png') !important; }
+.icon-app-13 { background-image: url('https://img.baibai.cv/f/rBRosA/smartslice_13.png') !important; }
+.icon-app-14 { background-image: url('https://img.baibai.cv/f/bqmAhb/smartslice_14.png') !important; }
+.icon-app-15 { background-image: url('https://img.baibai.cv/f/zzbxsD/smartslice_15.png') !important; }
+.icon-app-16 { background-image: url('https://img.baibai.cv/f/a7XasR/smartslice_16.png') !important; }
+.icon-app-17 { background-image: url('https://img.baibai.cv/f/k6rgUX/smartslice_17.png') !important; }
+.icon-app-18 { background-image: url('https://img.baibai.cv/f/EEv8uX/smartslice_18.png') !important; }
+.icon-app-19 { background-image: url('https://img.baibai.cv/f/Z8P4uV/smartslice_19.png') !important; }
+.icon-app-20 { background-image: url('https://img.baibai.cv/f/BQg4iX/smartslice_20.png') !important; }
+
+      @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+   </style>
+  </head>
+  <body>
+    <main class="phone-shell" id="phoneShell">
+                 <!-- ✨ 视频开屏动画 + 配乐 -->
+      <div class="boot-splash" id="bootSplash">
+        <!-- 开始按钮遮罩（最先显示） -->
+        <div class="boot-start-overlay" id="bootStartOverlay">
+          <div class="boot-start-logo">𓆩 Angel 𓆪</div>
+          <div class="boot-start-btn" id="bootStartBtn">ENTER</div>
+          <div class="boot-start-hint">tap to begin</div>
+        </div>
+        <!-- 视频（初始暂停，等用户点击后播放） -->
+        <video class="boot-video" id="bootVideo"
+          playsinline webkit-playsinline
+          src="https://img.baibai.cv/f/EEA7IX/IMG_7385.MP4">
+        </video>
+        <!-- 背景音乐 -->
+        <audio id="bootAudio" preload="auto" loop
+          src="https://img.baibai.cv/f/Z8rmiV/M800004YJX0a2I3Qnu.mp3">
+        </audio>
+        <div class="boot-skip" id="bootSkip" style="display:none;">SKIP ›</div>
+      </div>
+
+      <div class="status-bar" id="statusBar">
+        <span class="status-time" id="statusTime">10:32</span>
+        <div class="status-right">
+          <div class="icon-signal"><span></span><span></span><span></span></div>
+          <span class="battery-percent" id="batteryPercent">95%</span>
+          <div class="battery-container">
+            <span class="charging-indicator" id="chargingIndicator">
+              <svg viewBox="0 0 24 24" width="8" height="8"><path d="M12 2V4M12 20V22M4.93 4.93L6.34 6.34M17.66 17.66L19.07 19.07M2 12H4M20 12H22M6.34 17.66L4.93 19.07M19.07 4.93L17.66 6.34" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <div class="icon-battery"><div class="battery-core" id="batteryCore"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 锁屏 - transparent背景，壁纸透出 -->
+      <section class="screen lock-screen is-active" id="lockScreen">
+        <div class="lock-time-box">
+          <div class="lock-date" id="lockDate">7月7日 星期一</div>
+          <div class="lock-weather" id="lockWeather">多云 22°C 🌧</div>
+          <div class="lock-time" id="lockTime">10:32</div>
+        </div>
+        <div class="lock-tap-hint">轻触屏幕解锁</div>
+      </section>
+
+      <!-- 密码屏 -->
+      <section class="screen passcode-screen" id="passcodeScreen">
+        <div class="passcode-title" id="passcodeTitle">输入密码解锁</div>
+        <div class="dots-container" id="dotsContainer">
+          <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+          <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+        <div class="keypad" id="keypad">
+          <button class="key">1<span class="key-sub"></span></button>
+          <button class="key">2<span class="key-sub">ABC</span></button>
+          <button class="key">3<span class="key-sub">DEF</span></button>
+          <button class="key">4<span class="key-sub">GHI</span></button>
+          <button class="key">5<span class="key-sub">JKL</span></button>
+          <button class="key">6<span class="key-sub">MNO</span></button>
+          <button class="key">7<span class="key-sub">PQRS</span></button>
+          <button class="key">8<span class="key-sub">TUV</span></button>
+          <button class="key">9<span class="key-sub">WXYZ</span></button>
+          <div></div>
+          <button class="key">0<span class="key-sub">+</span></button>
+          <div></div>
+        </div>
+        <div class="keypad-footer">
+          <button id="btnForget">重置</button>
+          <button id="btnDelete">⌫</button>
+        </div>
+      </section>
+
+      <!-- 主屏 -->
+      <section class="screen home-screen" id="homeScreen">
+        <div class="slider-viewport-gemini" id="sliderViewport">
+          <div class="slider-track-gemini" id="sliderTrack">
+
+                                 <!-- ================= 第一页：意识流排版 ================= -->
+          <div class="home-page-gemini" data-page-index="0">
+            <div class="main-content">
+              <!-- 这里去掉了 D-DAY 的专属 wrap 盒子，恢复原生的网格流 -->
+              <div class="apps-grid-gemini" style="gap: 15px 12px; margin-top: 15px; grid-auto-flow: dense;">
+                
+                <!-- 左列：排布 4 个图标 -->
+                <div class="app-item-gemini" style="grid-column: 1; grid-row: 1;">
+                  <div class="app-icon-box-gemini icon-sprite icon-app-01"></div><span class="app-label-gemini">Youtube</span>
+                </div>
+                <div class="app-item-gemini" style="grid-column: 2; grid-row: 1;">
+                  <div class="app-icon-box-gemini icon-sprite icon-app-02"></div><span class="app-label-gemini">Camera</span>
+                </div>
+                
+                <!-- 🌟 右侧 2x2 意识流切片组件 (强制霸占右上角) -->
+                <div class="app-item-gemini widget-2x2" style="grid-column: 3 / span 2; grid-row: 1 / span 2; gap: 0;">
+                  <div style="width: 100%; height: 100%; background: linear-gradient(135deg, rgba(255,255,255,0.7), rgba(240,240,240,0.3)); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.8); border-radius: 26px; box-shadow: 0 10px 30px rgba(0,0,0,0.04), inset 0 2px 10px rgba(255,255,255,0.8); position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; cursor: default;">
+                    <!-- 极巨大的底层虚化单词 (裁切出一半) -->
+                    <div style="position: absolute; left: -10%; top: -10%; font-family: 'Times New Roman', serif; font-style: italic; font-size: 100px; font-weight: 700; color: rgba(0,0,0,0.03); line-height: 0.8; letter-spacing: -5px; transform: rotate(-10deg); pointer-events: none;">
+                      celestial
+                    </div>
+                    <!-- 右下角被裁切的大字 -->
+                    <div style="position: absolute; right: -25%; bottom: -5%; font-family: sans-serif; font-size: 65px; font-weight: 900; color: rgba(0,0,0,0.04); letter-spacing: -3px; pointer-events: none;">
+                      AURA
+                    </div>
+                    <!-- 表面排版 -->
+                    <div style="z-index: 1; text-align: left; width: 100%; padding: 0 16px;">
+                      <div style="font-family: 'Times New Roman', serif; font-size: 24px; color: #111; letter-spacing: -1px; font-weight: 600; line-height: 1;">angel</div>
+                      <div style="font-family: sans-serif; font-size: 10px; color: #555; font-weight: 600; margin-top: 4px; letter-spacing: 1px; text-transform: uppercase;">[ no halo ]</div>
+                      <div style="margin-top: 25px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 8px;">
+                        <div style="font-size: 8px; color: #777; font-family: monospace; letter-spacing: 0.5px;">// ERROR: HEAVEN NOT FOUND //</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 填补左侧空白的两个图标 -->
+                <div class="app-item-gemini" style="grid-column: 1; grid-row: 2;">
+                  <div class="app-icon-box-gemini icon-sprite icon-app-03"></div><span class="app-label-gemini">Spotify</span>
+                </div>
+                <div class="app-item-gemini" style="grid-column: 2; grid-row: 2;">
+                  <div class="app-icon-box-gemini icon-sprite icon-app-04"></div><span class="app-label-gemini">Maps</span>
+                </div>
+
+                <!-- 底部：4个图标 -->
+                <div class="app-item-gemini" style="grid-column: span 1; grid-row: 3;"><div class="app-icon-box-gemini icon-sprite icon-app-05"></div><span class="app-label-gemini">Tiktok</span></div>
+                <div class="app-item-gemini" style="grid-column: span 1; grid-row: 3;"><div class="app-icon-box-gemini icon-sprite icon-app-06"></div><span class="app-label-gemini">Weibo</span></div>
+                <div class="app-item-gemini" style="grid-column: span 1; grid-row: 3;"><div class="app-icon-box-gemini icon-sprite icon-app-07"></div><span class="app-label-gemini">Weather</span></div>
+                <div class="app-item-gemini" style="grid-column: span 1; grid-row: 3;"><div class="app-icon-box-gemini icon-sprite icon-app-08"></div><span class="app-label-gemini">Notes</span></div>
+
+              </div>
+            </div>
+          </div>
+
+                   <!-- ================= 第二页：真·天使神明氛围 ================= -->
+          <div class="home-page-gemini" data-page-index="1">
+            <div class="main-content">
+              <div class="apps-grid-gemini" style="gap: 18px 12px; margin-top: 15px;">
+                
+                <!-- 🌟 顶部置顶放大：磨砂玻璃 真·羽毛 Angel Banner (跨 4 列 3 行) -->
+                <div class="app-item-gemini widget-4x3" style="gap: 0; margin-bottom: 5px;">
+                  <div style="width: 100%; height: 100%; background: rgba(255, 255, 255, 0.5); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1.5px solid rgba(255, 255, 255, 1); border-radius: 32px; box-shadow: 0 12px 35px rgba(0,0,0,0.03), inset 0 0 20px rgba(255,255,255,0.8); display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;">
+                    
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 25px; z-index: 1;">
+                      <span style="font-size: 54px; transform: scaleX(-1) translateY(-2px); filter: grayscale(1) brightness(1.2) drop-shadow(0 0 8px rgba(255,255,255,1)); opacity: 0.85;">🪽</span>
+                      <div style="position: relative; margin: 0 8px;">
+                        <!-- 白光光环 -->
+                        <div style="position: absolute; top: -16px; left: 50%; transform: translateX(-50%); width: 44px; height: 12px; border: 3px solid rgba(255, 255, 255, 1); border-radius: 50%; box-shadow: 0 0 15px rgba(255, 255, 255, 1), inset 0 0 10px rgba(255, 255, 255, 0.9);"></div>
+                        <!-- 头像 -->
+                        <div style="width: 76px; height: 76px; border-radius: 50%; background: rgba(255,255,255,0.9); display: flex; align-items: center; justify-content: center; border: 3px solid #fff; box-shadow: 0 8px 20px rgba(0,0,0,0.06);">
+                           <span style="font-size: 32px;">🤍</span>
+                        </div>
+                      </div>
+                      <span style="font-size: 54px; transform: translateY(-2px); filter: grayscale(1) brightness(1.2) drop-shadow(0 0 8px rgba(255,255,255,1)); opacity: 0.85;">🪽</span>
+                    </div>
+                    
+                    <div style="font-size: 16px; color: #666; text-align: center; font-weight: 500; letter-spacing: 0.5px;">
+                      𓆩⁺₊⋆ 𝓐𝓷𝓰𝓮𝓵 𝓕𝓪𝓷𝓽𝓪𝓼𝔂 ⋆⁺₊🪽 𓆪
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 中部：4个图标 -->
+                <div class="app-item-gemini"><div class="app-icon-box-gemini icon-sprite icon-app-09"></div><span class="app-label-gemini">Gallery</span></div>
+                <div class="app-item-gemini"><div class="app-icon-box-gemini icon-sprite icon-app-10"></div><span class="app-label-gemini">Mail</span></div>
+                <div class="app-item-gemini"><div class="app-icon-box-gemini icon-sprite icon-app-11"></div><span class="app-label-gemini">Games</span></div>
+                <div class="app-item-gemini"><div class="app-icon-box-gemini icon-sprite icon-app-12"></div><span class="app-label-gemini">Store</span></div>
+
+                <!-- 底部：4个图标 -->
+                <div class="app-item-gemini" id="appIconSettings"><div class="app-icon-box-gemini icon-sprite icon-app-13"></div><span class="app-label-gemini">Settings</span></div>
+                <div class="app-item-gemini"><div class="app-icon-box-gemini icon-sprite icon-app-14"></div><span class="app-label-gemini">Clock</span></div>
+                <div class="app-item-gemini"><div class="app-icon-box-gemini icon-sprite icon-app-15"></div><span class="app-label-gemini">Health</span></div>
+                <div class="app-item-gemini"><div class="app-icon-box-gemini icon-sprite icon-app-16"></div><span class="app-label-gemini">Files</span></div>
+
+              </div>
+            </div><!-- ← 关闭 Page 1 main-content -->
+          </div>
+
+
+            <!-- Page 2: 播放器 -->
+            <div class="home-page-gemini" data-page-index="2">
+              <div class="main-content">
+                <article class="widget-player" id="widgetPlayer">
+                  <div class="player-heart">♡</div>
+                  <div class="player-content" id="playerContentMain">
+                    <div class="player-cover" id="playerCover">
+                      <div class="player-cover-grooves"></div>
+                      <div class="player-cover-art is-empty" id="playerCoverArt"></div>
+                      <div class="player-cover-center"></div>
+                    </div>
+                    <div class="player-info">
+                      <div class="player-title" id="playerTitle">告白气球</div>
+                      <div class="player-artist" id="playerArtist">周杰伦</div>
+                    </div>
+                    <div class="player-compact-controls">
+                      <button class="compact-btn" id="btnPrev"><svg viewBox="0 0 24 24"><polygon points="19,20 9,12 19,4"/><line x1="5" y1="19" x2="5" y2="5"/></svg></button>
+                      <button class="compact-btn play-toggle" id="btnPlay"><svg id="iconPlay" viewBox="0 0 24 24"><polygon points="6,3 20,12 6,21"/></svg></button>
+                      <button class="compact-btn" id="btnNext"><svg viewBox="0 0 24 24"><polygon points="5,4 15,12 5,20"/><line x1="19" y1="5" x2="19" y2="19"/></svg></button>
+                    </div>
+                  </div>
+                  <div class="player-wave" id="playerWave">
+                    <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+                    <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+                    <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+                  </div>
+                  <div class="lyrics-container" id="lyricsContainer">
+                    <div class="lyrics-line" id="lyricsLine">🎵 点击上方可控制播放</div>
+                  </div>
+                  <div class="player-progress">
+                    <div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill"></div></div>
+                    <div class="progress-time"><span id="currentTime">1:24</span><span id="totalTime">3:45</span></div>
+                  </div>
+                  <div class="player-upload">
+                    <input type="file" id="musicFileInput" accept="audio/*" style="display:none;">
+                    <input type="file" id="lyricsFileInput" accept=".lrc,.txt" style="display:none;">
+                    <div class="link-input-area">
+                      <input type="text" id="musicLinkInput" placeholder="输入歌曲名搜索..." class="link-input">
+                      <button class="link-add-btn" id="btnAddLink">搜索</button>
+                    </div>
+                    <div class="player-tip"> 输入歌名或歌名+歌手，直接搜索并播放</div>
+                    <div class="search-results" id="searchResults"></div>
+                    <div class="upload-btns">
+                      <button class="upload-btn" id="btnUpload">+ 本地音乐</button>
+                      <button class="upload-btn" id="btnUploadLyrics">+ 上传歌词</button>
+                    </div>
+                  </div>
+                </article>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="page-indicator-gemini" id="pageIndicator">
+          <div class="dot-gemini active"></div>
+          <div class="dot-gemini"></div>
+          <div class="dot-gemini"></div>
+        </div>
+
+        <nav class="dock-bar-gemini" id="dockBar">
+  <div class="dock-icon-gemini icon-sprite icon-wechat"></div>
+  <div class="dock-icon-gemini">🧭</div>
+  <div class="dock-icon-gemini icon-sprite icon-instagram"></div>
+  <div class="dock-icon-gemini icon-sprite icon-spotify" id="dockMusicIcon"></div>
+</nav>
+
+        <div class="bottom-signature">─ 花より美しく　星より輝く ─</div>
+      </section>
+
+           <!-- ===== 统一 Settings 面板 ===== -->
+      <div class="app-full-window" id="settingsPanel">
+        <div class="app-window-header">
+          <div class="app-window-title">Settings</div>
+          <button class="btn-close-window" id="btnSettingsClose">关闭</button>
+        </div>
+        <div class="window-content" style="overflow-y: auto; flex: 1;">
+
+          <!-- 🔒 锁屏开关 -->
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 16px; margin-bottom: 14px;">
+            <div>
+              <div style="font-size: 13px; font-weight: 600; color: #fff;">锁屏界面</div>
+              <div style="font-size: 10px; color: rgba(255,255,255,0.5); margin-top: 2px;">关闭后跳过锁屏直接进入桌面</div>
+            </div>
+            <div id="lockScreenToggle" style="width: 44px; height: 24px; background: rgba(255,255,255,0.3); border-radius: 12px; position: relative; cursor: pointer; transition: background 0.3s ease;">
+              <div id="lockToggleKnob" style="position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; background: #fff; border-radius: 50%; box-shadow: 0 2px 6px rgba(0,0,0,0.2); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);"></div>
+            </div>
+          </div>
+
+          <hr style="border:0; border-top:1px solid rgba(255,255,255,0.12); margin:14px 0;" />
+
+          <!-- 🎨 壁纸 -->
+          <div style="font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.5); margin-bottom: 8px; letter-spacing: 1px; text-transform: uppercase;">壁纸</div>
+          <div class="cute-tab-btns">
+            <button class="is-active" id="tabLocal">本地上传</button>
+            <button id="tabUrl">网络图片</button>
+          </div>
+          <div class="input-group" id="groupLocal">
+            <label>上传壁纸图片</label>
+            <input type="file" id="wpFileInput" accept="image/*" style="font-size:12px; background:rgba(255,255,255,0.10); color:white; padding:10px; border-radius:12px; width:100%; border:1px solid rgba(255,255,255,0.22);" />
+          </div>
+          <div class="input-group" id="groupUrl" style="display:none;">
+            <label>壁纸图片 URL</label>
+            <input type="text" id="wpUrlInput" placeholder="https://example.com/wallpaper.jpg" />
+          </div>
+
+          <hr style="border:0; border-top:1px solid rgba(255,255,255,0.12); margin:14px 0;" />
+
+          <!-- 🔤 字体颜色 -->
+          <div style="font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.5); margin-bottom: 8px; letter-spacing: 1px; text-transform: uppercase;">字体色调</div>
+          <div class="input-group">
+            <div class="color-pick-row">
+              <input type="color" id="fontColorPicker" value="#ffffff" />
+              <input type="text" id="fontColorHex" value="#ffffff" />
+            </div>
+          </div>
+
+          <hr style="border:0; border-top:1px solid rgba(255,255,255,0.12); margin:14px 0;" />
+
+          <!-- ⚙️ API -->
+          <div style="font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.5); margin-bottom: 8px; letter-spacing: 1px; text-transform: uppercase;">API 接口</div>
+          <div class="input-group"><label>API Base URL</label><input type="text" id="apiBaseInput" placeholder="https://api.openai.com/v1" /></div>
+          <div class="input-group"><label>API Key</label><input type="text" id="apiKeyInput" placeholder="sk-..." /></div>
+
+          <hr style="border:0; border-top:1px solid rgba(255,255,255,0.12); margin:14px 0;" />
+
+          <button class="btn-apply-all" id="btnSettingsSave">保存所有设置</button>
+        </div>
+      </div>
+
+
+    <script>
+      // ===== config =====
+      (function() {
+        window.playlist = [
+          { title:"always online", artist:"林俊杰", duration:225, url:"" },
+          { title:"晴天", artist:"周杰伦", duration:269, url:"" },
+          { title:"七里香", artist:"周杰伦", duration:299, url:"" },
+          { title:"稻香", artist:"周杰伦", duration:233, url:"" },
+          { title:"简单爱", artist:"周杰伦", duration:270, url:"" }
+        ];
+        window.currentTrack=0; window.isPlaying=false; window.currentTime=0;
+        window.progressInterval=null; window.animationId=null; window.lyricsAnimationId=null;
+        window.audio=new Audio();
+        window.GD_API='https://music-api.gdstudio.xyz/api.php';
+        window.GD_SOURCE='joox'; window.FALLBACK_SOURCES=['joox','netease','kuwo'];
+        window.LESOU_BASE='https://lesou-music.pages.dev';
+        window.lyricsData = {
+          "告白气球":[{time:0,text:"🎵 告白气球"},{time:4,text:"塞纳河畔 左岸的咖啡"},{time:8,text:"我手一杯 品尝你的美"},{time:12,text:"留下唇印的嘴"},{time:16,text:"花店玫瑰 名字写错谁"},{time:20,text:"告白气球 风吹到对街"},{time:24,text:"微笑在天上飞"},{time:28,text:"你说你有点难追"},{time:32,text:"想让我知难而退"},{time:36,text:"礼物不需挑最贵"},{time:40,text:"只要香榭的落叶"},{time:44,text:"喔 营造浪漫的约会"},{time:48,text:"不害怕搞砸一切"},{time:52,text:"拥有你就拥有全世界"},{time:56,text:"亲爱的 爱上你 从那天起"},{time:62,text:"甜蜜的很轻易"},{time:66,text:"亲爱的 别任性 你的眼睛"},{time:72,text:"在说我愿意"},{time:78,text:"塞纳河畔 左岸的咖啡"},{time:82,text:"我手一杯 品尝你的美"},{time:126,text:"拥有你就拥有全世界"}],
+          "晴天":[{time:0,text:"🎵 晴天"},{time:5,text:"故事的小黄花"},{time:9,text:"从出生那年就飘着"},{time:78,text:"刮风这天我试过握着你手"},{time:84,text:"但偏偏雨渐渐大到我看你不见"},{time:102,text:"从前从前有个人爱你很久"},{time:120,text:"故事的最后你好像还是说了拜拜"}],
+          "七里香":[{time:0,text:"🎵 七里香"},{time:6,text:"窗外的麻雀 在电线杆上多嘴"},{time:54,text:"雨下整夜 我的爱溢出就像雨水"},{time:96,text:"你是我唯一想要的了解"}],
+          "稻香":[{time:0,text:"🎵 稻香"},{time:8,text:"对这个世界如果你有太多的抱怨"},{time:52,text:"随着稻香河流继续奔跑"},{time:76,text:"回家吧 回到最初的美好"}],
+          "简单爱":[{time:0,text:"🎵 简单爱"},{time:6,text:"说不上为什么 我变得很主动"},{time:54,text:"我想就这样牵着你的手不放开"},{time:100,text:"像这样的生活 我爱你你爱我"}]
+        };
+        window.triggerIsland=function(text){
+          var island=document.getElementById("dynamicIsland"),content=document.getElementById("islandContent");
+          island.classList.add("expanded"); content.textContent=text;
+          setTimeout(function(){island.classList.remove("expanded");},2000);
+        };
+      })();
+
+      // ===== clock =====
+      (function(){
+        window.updateClock=function(){
+          var now=new Date();
+          var timeStr=new Intl.DateTimeFormat("zh-CN",{hour:"2-digit",minute:"2-digit",hour12:false}).format(now);
+          document.getElementById("statusTime").textContent=timeStr;
+          document.getElementById("lockTime").textContent=timeStr;
+          var weekdayStr=["星期日","星期一","星期二","星期三","星期四","星期五","星期六"][now.getDay()];
+          var monthStr=(now.getMonth()+1)+"月";
+          if(document.getElementById("lockDate")) document.getElementById("lockDate").textContent=monthStr+now.getDate()+"日 "+weekdayStr;
+        };
+        window.initBatteryMonitor=function(){
+          var batteryPercent=document.getElementById("batteryPercent"),batteryCore=document.getElementById("batteryCore"),chargingIndicator=document.getElementById("chargingIndicator");
+          var simulatedLevel=87,simulatedCharging=false,useRealBattery=false;
+          function updateBatteryUI(level,charging){
+            batteryPercent.textContent=level+"%"; batteryCore.style.width=level+"%";
+            batteryCore.classList.remove("battery-low","battery-charging"); chargingIndicator.style.display="none";
+            if(charging){batteryCore.classList.add("battery-charging");chargingIndicator.style.display="inline";}
+            else if(level<20){batteryCore.classList.add("battery-low");}
+          }
+          updateBatteryUI(simulatedLevel,simulatedCharging);
+          setInterval(function(){if(useRealBattery)return;if(simulatedCharging){simulatedLevel=Math.min(100,simulatedLevel+2);if(simulatedLevel>=100)simulatedCharging=false;}else{simulatedLevel=Math.max(5,simulatedLevel-1);if(simulatedLevel<=15)simulatedCharging=true;}updateBatteryUI(simulatedLevel,simulatedCharging);},30000);
+          if("getBattery" in navigator){try{navigator.getBattery().then(function(b){useRealBattery=true;updateBatteryUI(Math.round(b.level*100),b.charging);b.addEventListener("levelchange",function(){updateBatteryUI(Math.round(b.level*100),b.charging);});b.addEventListener("chargingchange",function(){updateBatteryUI(Math.round(b.level*100),b.charging);});}).catch(function(){});}catch(e){}}
+        };
+      })();
+
+      // ===== lockscreen =====
+      (function(){
+        var enteredPasscode="",lockScreen=document.getElementById("lockScreen"),passcodeScreen=document.getElementById("passcodeScreen"),homeScreen=document.getElementById("homeScreen"),passcodeTitle=document.getElementById("passcodeTitle");
+        function isPasswordSet(){return!!localStorage.getItem("phone-pin-code");}
+        lockScreen.addEventListener("click",function(){lockScreen.classList.remove("is-active");passcodeScreen.classList.add("is-active");if(!isPasswordSet())passcodeTitle.textContent="✨ 请设置 6 位新密码";});
+        var dots=document.querySelectorAll(".dot");
+        function handleKeypadInput(e){var btn=e.target.closest(".key");if(!btn||enteredPasscode.length>=6)return;if(e.type==="touchstart")e.preventDefault();btn.classList.add("key-pressed");setTimeout(function(){btn.classList.remove("key-pressed");},150);enteredPasscode+=btn.textContent.trim().charAt(0);updateDots();if(enteredPasscode.length===6)setTimeout(verifyOrSetPasscode,80);}
+        document.getElementById("keypad").addEventListener("touchstart",handleKeypadInput,{passive:false});
+        document.getElementById("keypad").addEventListener("click",handleKeypadInput);
+        function updateDots(){dots.forEach(function(dot,idx){dot.classList.toggle("filled",idx<enteredPasscode.length);});}
+        function verifyOrSetPasscode(){
+          if(!isPasswordSet()){localStorage.setItem("phone-pin-code",enteredPasscode);window.triggerIsland("密码设置成功 🌸");enteredPasscode="";updateDots();passcodeTitle.textContent="输��密码进入手机";return;}
+          if(enteredPasscode===localStorage.getItem("phone-pin-code")){passcodeScreen.classList.remove("is-active");homeScreen.classList.add("is-active");window.triggerIsland("欢迎回来 🤍");}
+          else{window.triggerIsland("密码错误");enteredPasscode="";updateDots();}
+        }
+        document.getElementById("btnDelete").addEventListener("click",function(){if(enteredPasscode.length>0){enteredPasscode=enteredPasscode.slice(0,-1);updateDots();}});
+        document.getElementById("btnForget").addEventListener("click",function(){if(confirm("重置密码？")){localStorage.removeItem("phone-pin-code");enteredPasscode="";updateDots();passcodeTitle.textContent="✨ 请设置新密码";}});
+      })();
+
+      // ===== homescreen =====
+      (function(){
+        var phoneShell=document.getElementById("phoneShell"),sliderViewport=document.getElementById("sliderViewport"),sliderTrack=document.getElementById("sliderTrack"),indicatorDots=document.querySelectorAll(".dot-gemini");
+        var currentPage=0,isSliderDragging=false,startTrackX=0,startTimestamp=0,lastTrackX=0,velocity=0,startTransform=0;
+        function getVW(){return sliderViewport.getBoundingClientRect().width;}
+        function updateTrackTransform(p){sliderTrack.style.transform="translateX("+Math.max(-66.666,Math.min(0,p))+"%)"; }
+        function handleDragStart(e){if(e.target.closest(".app-main-icon"))return;var cx=e.type.includes("touch")?e.touches[0].clientX:e.clientX;startTrackX=cx;lastTrackX=cx;startTimestamp=Date.now();startTransform=-currentPage*33.333;isSliderDragging=true;sliderTrack.style.transition="none";velocity=0;}
+        function handleDragMove(e){if(!isSliderDragging)return;var cx=e.type.includes("touch")?e.touches[0].clientX:e.clientX,diffX=cx-startTrackX,pct=(diffX/getVW())*100,np=startTransform+pct;if(currentPage===0&&diffX>0)np=startTransform+pct*0.3;else if(currentPage===2&&diffX<0)np=startTransform+pct*0.3;updateTrackTransform(np);var now=Date.now(),dt=now-startTimestamp;if(dt>0)velocity=(cx-lastTrackX)/dt;lastTrackX=cx;startTimestamp=now;}
+        function handleDragEnd(){if(!isSliderDragging)return;isSliderDragging=false;var vw=getVW(),thr=vw*0.25,m=sliderTrack.style.transform.match(/-?[\d.]+/),ct=m?parseFloat(m[0]):-currentPage*33.333,diff=((ct+currentPage*33.333)/100)*vw;if(velocity>0.5&&currentPage>0)currentPage--;else if(velocity<-0.5&&currentPage<2)currentPage++;else if(diff<-thr&&currentPage<2)currentPage++;else if(diff>thr&&currentPage>0)currentPage--;sliderTrack.style.transition="transform 400ms cubic-bezier(0.32,0.72,0,1)";updateTrackTransform(-currentPage*33.333);indicatorDots.forEach(function(d,i){d.classList.toggle("active",i===currentPage);});}
+        sliderViewport.addEventListener("touchstart",handleDragStart,{passive:true});
+        sliderViewport.addEventListener("touchmove",handleDragMove,{passive:true});
+        sliderViewport.addEventListener("touchend",handleDragEnd);
+        sliderViewport.addEventListener("mousedown",handleDragStart);
+        window.addEventListener("mousemove",handleDragMove);
+        window.addEventListener("mouseup",handleDragEnd);
+        window.addEventListener("mouseleave",handleDragEnd);
+
+               // ---- 统一 Settings 面板 ----
+        var settingsPanel=document.getElementById("settingsPanel");
+        var tabLocal=document.getElementById("tabLocal"),tabUrl=document.getElementById("tabUrl"),groupLocal=document.getElementById("groupLocal"),groupUrl=document.getElementById("groupUrl");
+        tabLocal.addEventListener("click",function(){tabLocal.classList.add("is-active");tabUrl.classList.remove("is-active");groupLocal.style.display="block";groupUrl.style.display="none";});
+        tabUrl.addEventListener("click",function(){tabUrl.classList.add("is-active");tabLocal.classList.remove("is-active");groupLocal.style.display="none";groupUrl.style.display="block";});
+        var fontColorPicker=document.getElementById("fontColorPicker"),fontColorHex=document.getElementById("fontColorHex");
+        fontColorPicker.addEventListener("input",function(e){fontColorHex.value=e.target.value;});
+
+        // 打开 Settings
+        document.getElementById("appIconSettings")?.addEventListener("click",function(){settingsPanel.classList.add("is-open");});
+        document.getElementById("btnSettingsClose")?.addEventListener("click",function(){settingsPanel.classList.remove("is-open");});
+
+        // 保存
+        document.getElementById("btnSettingsSave").addEventListener("click",function(){
+          if(tabLocal.classList.contains("is-active")){
+            var file=document.getElementById("wpFileInput").files[0];
+            if(file){var r=new FileReader();r.onload=function(e){phoneShell.style.backgroundImage="url("+e.target.result+")";};r.readAsDataURL(file);}
+          }else{
+            var url=document.getElementById("wpUrlInput").value.trim();
+            if(url){phoneShell.style.backgroundImage="url("+url+")";}
+          }
+          document.documentElement.style.setProperty("--ink",fontColorHex.value);
+          settingsPanel.classList.remove("is-open");
+          window.triggerIsland("设置已保存 ✓");
+        });
+
+        // 锁屏开关
+        (function(){
+          var toggle=document.getElementById("lockScreenToggle"),knob=document.getElementById("lockToggleKnob");
+          if(!toggle||!knob)return;
+          var isOn=localStorage.getItem("lockScreenEnabled")!=="false";
+          function updateUI(){
+            toggle.style.background=isOn?"rgba(180,170,158,0.7)":"rgba(255,255,255,0.3)";
+            knob.style.transform=isOn?"translateX(20px)":"translateX(0)";
+          }
+          updateUI();
+          toggle.addEventListener("click",function(){isOn=!isOn;localStorage.setItem("lockScreenEnabled",isOn);updateUI();window.triggerIsland(isOn?"锁屏已开启":"锁屏已关闭");});
+        })();
+
+        // 页面加载跳过锁屏
+        if(localStorage.getItem("lockScreenEnabled")==="false"){
+          var ls=document.querySelector(".lock-screen"),hs=document.querySelector(".home-screen");
+          if(ls)ls.classList.remove("is-active");
+          if(hs)hs.classList.add("is-active");
+        }
+      })();
+
+      // ===== player-core =====
+      (function(){
+        var audio=window.audio,playlist=window.playlist,currentTrack=window.currentTrack,isPlaying=window.isPlaying,currentTime=window.currentTime,progressInterval=window.progressInterval,animationId=window.animationId,lyricsAnimationId=window.lyricsAnimationId;
+        var playerCover=document.getElementById("playerCover"),playerCoverArt=document.getElementById("playerCoverArt"),playerTitle=document.getElementById("playerTitle"),playerArtist=document.getElementById("playerArtist"),progressFill=document.getElementById("progressFill"),currentTimeEl=document.getElementById("currentTime"),totalTimeEl=document.getElementById("totalTime"),btnPlay=document.getElementById("btnPlay"),playerWave=document.getElementById("playerWave"),waveBars=playerWave.querySelectorAll(".wave-bar"),lyricsLine=document.getElementById("lyricsLine");
+        window.loadTrack=function(index){var track=playlist[index];isPlaying=false;if(progressInterval)clearInterval(progressInterval);stopLyricsUpdate();stopWaveAnimation();audio.pause();audio.src=track.url||'';audio.load();if(track.url){audio.onloadedmetadata=function(){track.duration=audio.duration;updatePlayer();};}currentTrack=index;currentTime=0;updatePlayer();lyricsLine.style.opacity='1';var lyrics=window.lyricsData[track.title]||[{time:0,text:track.title}];lyricsLine.textContent=lyrics[0].text;};
+        function updatePlayer(){var track=playlist[currentTrack];playerTitle.textContent=track.title;playerArtist.textContent=track.artist;if(track.cover){playerCoverArt.style.backgroundImage="url('"+track.cover+"')";playerCoverArt.classList.remove('is-empty');}else{playerCoverArt.style.backgroundImage='';playerCoverArt.classList.add('is-empty');}var progress=track.duration>0?(currentTime/track.duration)*100:0;progressFill.style.width=progress+"%";var m=Math.floor(currentTime/60),s=Math.floor(currentTime%60);currentTimeEl.textContent=m+":"+s.toString().padStart(2,'0');var tm=Math.floor(track.duration/60),ts=Math.floor(track.duration%60);totalTimeEl.textContent=tm+":"+ts.toString().padStart(2,'0');btnPlay.innerHTML=isPlaying?'<svg viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>':'<svg viewBox="0 0 24 24"><polygon points="6,3 20,12 6,21"/></svg>';if(isPlaying){playerCover.classList.add("is-playing");playerWave.style.opacity=1;startWaveAnimation();}else{playerCover.classList.remove("is-playing");playerWave.style.opacity=0;stopWaveAnimation();}}
+        window.updatePlayer=updatePlayer;
+        function startLyricsUpdate(){if(lyricsAnimationId)return;function update(){if(!isPlaying){stopLyricsUpdate();return;}var track=playlist[currentTrack],lyrics=window.lyricsData[track.title]||[{time:0,text:track.title}],cl=lyrics[0];for(var i=lyrics.length-1;i>=0;i--){if(currentTime>=lyrics[i].time){cl=lyrics[i];break;}}if(lyricsLine.textContent!==cl.text){lyricsLine.style.opacity='0';lyricsLine.style.transform='translateY(8px)';setTimeout(function(){lyricsLine.textContent=cl.text;lyricsLine.style.opacity='1';lyricsLine.style.transform='translateY(0)';},150);}lyricsAnimationId=requestAnimationFrame(update);}update();}
+        function stopLyricsUpdate(){if(lyricsAnimationId){cancelAnimationFrame(lyricsAnimationId);lyricsAnimationId=null;}}
+        function startWaveAnimation(){if(animationId)return;function aw(){if(!isPlaying){stopWaveAnimation();return;}var h=[0.4,0.6,0.8,0.5,1,0.7,0.9,0.55,0.65];waveBars.forEach(function(bar,i){var hh=h[i]+(Math.random()*0.3-0.15);bar.style.height=(hh*20)+"px";bar.style.opacity=0.4+Math.random()*0.4;});animationId=requestAnimationFrame(aw);}aw();}
+        function stopWaveAnimation(){if(animationId){cancelAnimationFrame(animationId);animationId=null;}}
+        window.startLyricsUpdate=startLyricsUpdate;window.stopLyricsUpdate=stopLyricsUpdate;window.startWaveAnimation=startWaveAnimation;window.stopWaveAnimation=stopWaveAnimation;
+        window.togglePlay=async function(){var track=playlist[currentTrack];if(isPlaying){audio.pause();isPlaying=false;clearInterval(progressInterval);stopLyricsUpdate();}else{if(track.url){try{if(audio.readyState<2){await new Promise(function(resolve,reject){var oc=function(){cleanup();resolve();},oe=function(){cleanup();reject(new Error('音频加载失败'));},cleanup=function(){audio.removeEventListener('canplay',oc);audio.removeEventListener('error',oe);};audio.addEventListener('canplay',oc);audio.addEventListener('error',oe);audio.load();});}await audio.play();isPlaying=true;startProgressUpdate();startLyricsUpdate();}catch(e){window.triggerIsland("播放失败: "+(e.message||'请检查网络'));isPlaying=false;return;}}else{isPlaying=true;startProgressUpdate();startLyricsUpdate();}}updatePlayer();};
+        function startProgressUpdate(){if(progressInterval)clearInterval(progressInterval);if(playlist[currentTrack].url){progressInterval=setInterval(function(){if(audio.readyState>=1){currentTime=audio.currentTime;updatePlayer();if(audio.ended)window.nextTrack();}},100);}else{progressInterval=setInterval(function(){currentTime++;if(currentTime>=playlist[currentTrack].duration)window.nextTrack();updatePlayer();},1000);}}
+        window.nextTrack=function(){currentTrack=(currentTrack+1)%playlist.length;window.loadTrack(currentTrack);if(isPlaying)setTimeout(function(){window.togglePlay();},100);};
+        window.prevTrack=function(){currentTrack=(currentTrack-1+playlist.length)%playlist.length;window.loadTrack(currentTrack);if(isPlaying)setTimeout(function(){window.togglePlay();},100);};
+        window.addMusic=function(file){if(file&&file.type.startsWith('audio/')){var url=URL.createObjectURL(file),title=file.name.replace(/\.[^/.]+$/,"");playlist.push({title:title,artist:"本地音乐",duration:0,url:url});window.triggerIsland("已添加: "+title);window.loadTrack(playlist.length-1);setTimeout(function(){window.togglePlay();},500);}};
+        btnPlay.addEventListener("click",window.togglePlay);
+        document.getElementById("btnPrev").addEventListener("click",window.prevTrack);
+        document.getElementById("btnNext").addEventListener("click",window.nextTrack);
+        document.getElementById("progressBar").addEventListener("click",function(e){var rect=e.currentTarget.getBoundingClientRect(),pct=(e.clientX-rect.left)/rect.width,track=playlist[currentTrack];currentTime=pct*track.duration;if(track.url&&audio.readyState>=1)audio.currentTime=currentTime;updatePlayer();var lyrics=window.lyricsData[track.title]||[{time:0,text:track.title}],cl=lyrics[0];for(var i=lyrics.length-1;i>=0;i--){if(currentTime>=lyrics[i].time){cl=lyrics[i];break;}}lyricsLine.textContent=cl.text;});
+        document.getElementById("btnUpload").addEventListener("click",function(){document.getElementById("musicFileInput").click();});
+        document.getElementById("musicFileInput").addEventListener("change",function(e){var file=e.target.files[0];if(file){window.addMusic(file);e.target.value='';}});
+      })();
+
+      // ===== player-api =====
+      (function(){
+        var playlist=window.playlist,LESOU_BASE=window.LESOU_BASE,GD_API=window.GD_API,GD_SOURCE=window.GD_SOURCE,FALLBACK_SOURCES=window.FALLBACK_SOURCES;
+        window.searchMusic=async function(query){var btnAddLink=document.getElementById("btnAddLink"),searchResults=document.getElementById("searchResults");btnAddLink.disabled=true;btnAddLink.textContent="搜索中...";searchResults.innerHTML='<div class="search-loading">🔍 正在搜索...</div>';searchResults.classList.add("has-results");try{if(query.startsWith('http')&&(query.includes('.mp3')||query.includes('.m4a')||query.includes('.wav')||query.includes('.ogg')||query.includes('.flac'))){await addDirectMusicLink(query);searchResults.classList.remove("has-results");}else if(query.includes('music.163.com')){await handleNeteaseLink(query);searchResults.classList.remove("has-results");}else if(query.startsWith('id:')||/^\d+$/.test(query)){await handleNeteaseLink('https://music.163.com/song?id='+(query.startsWith('id:')?query.substring(3):query));searchResults.classList.remove("has-results");}else{await fetchSearchResults(query);}}catch(error){window.triggerIsland("搜索失败: "+error.message);searchResults.innerHTML='<div class="search-no-results">搜索失败，请重试</div>';}finally{btnAddLink.disabled=false;btnAddLink.textContent="搜索";}};
+        document.getElementById("btnAddLink").addEventListener("click",function(){var li=document.getElementById("musicLinkInput"),q=li.value.trim();if(!q){window.triggerIsland("请输入歌曲名称或链接");return;}window.searchMusic(q);li.value='';});
+        document.getElementById("musicLinkInput").addEventListener("keypress",function(e){if(e.key==='Enter')document.getElementById("btnAddLink").click();});
+        async function fetchSearchResults(query){var searchResults=document.getElementById("searchResults"),allResults=[];try{var controller=new AbortController(),timeoutId=setTimeout(function(){controller.abort();},10000),res=await fetch(LESOU_BASE+'/api/search?keyword='+encodeURIComponent(query)+'&type=all',{signal:controller.signal});clearTimeout(timeoutId);if(res.ok){var json=await res.json();if(json.code===1&&Array.isArray(json.data)&&json.data.length>0){for(var i=0;i<json.data.length;i++){var song=json.data[i];allResults.push({id:song.id||'',name:song.name||'未知歌曲',artist:song.artist||'未知歌手',picId:song.pic||'',lyricId:song.lyric_id||'',source:song.source||'netease',type:'wy'});}}}}catch(e){}
+        if(allResults.length===0){for(var s=0;s<FALLBACK_SOURCES.length;s++){var source=FALLBACK_SOURCES[s];try{var url=GD_API+"?types=search&source="+source+"&name="+encodeURIComponent(query)+"&count=10&pages=1",controller2=new AbortController(),timeoutId2=setTimeout(function(){controller2.abort();},10000),response=await fetch(url,{signal:controller2.signal});clearTimeout(timeoutId2);if(!response.ok)continue;var data=await response.json();if(!Array.isArray(data)||data.length===0)continue;for(var j=0;j<data.length;j++){var gdSong=data[j];allResults.push({id:gdSong.id||'',name:gdSong.name||'未知歌曲',artist:Array.isArray(gdSong.artist)?gdSong.artist.join(', '):(gdSong.artist||'未知歌手'),picId:gdSong.pic_id||'',lyricId:gdSong.lyric_id||gdSong.id||'',source:source,type:'gd'});}}catch(e){continue;}}}
+        if(allResults.length===0){window.triggerIsland("未找到歌曲，请换个关键词");searchResults.innerHTML='<div class="search-no-results">未找到相关歌曲</div>';searchResults.classList.add("has-results");return;}renderSearchResults(allResults);searchResults.classList.add("has-results");window.triggerIsland("找到 "+allResults.length+" 首歌曲");}
+        function renderSearchResults(results){var sr=document.getElementById("searchResults");sr.innerHTML=results.map(function(song,index){return'<div class="search-result-item" onclick="window.playSearchResult('+index+')">'+'<div class="search-result-info"><div class="search-result-title">'+(song.name||'未知歌曲')+'</div><div class="search-result-artist">'+(song.artist||'未知歌手')+'</div></div>'+'<button class="search-result-play" onclick="event.stopPropagation();window.playSearchResult('+index+')">▶</button></div>';}).join('');window.searchResultsCache=results;}
+        window.playSearchResult=async function(index){if(!window.searchResultsCache||!window.searchResultsCache[index])return;var song=window.searchResultsCache[index],searchResults=document.getElementById("searchResults");searchResults.innerHTML='<div class="search-loading">🎵 正在加载...</div>';try{var secureUrl=null,coverUrl='',lrcArray=null;if(song.type!=='gd'){try{var songRes=await fetch(LESOU_BASE+'/api/song?id='+encodeURIComponent(song.id)+'&type=wy'),songData=await songRes.json();if(songData.code===1&&songData.data){secureUrl=songData.data.url||'';coverUrl=songData.data.pic||'';if(songData.data.lrc)lrcArray=parseLRC(songData.data.lrc);}}catch(e){}}if(!secureUrl){secureUrl=await tryFetchUrlGD(song.id,song.source||GD_SOURCE);if(song.picId){try{var picRes=await fetch(GD_API+"?types=pic&source="+(song.source||GD_SOURCE)+"&id="+encodeURIComponent(song.picId)),picData=await picRes.json();coverUrl=picData.url||'';}catch(e){}}if(!lrcArray&&song.lyricId){try{var lrcRes=await fetch(GD_API+"?types=lyric&source="+(song.source||GD_SOURCE)+"&id="+encodeURIComponent(song.lyricId)),lrcData=await lrcRes.json();if(lrcData.lyric)lrcArray=parseLRC(lrcData.lyric);}catch(e){}}}if(!secureUrl)throw new Error("无播放链接 (VIP/版权限制)");if(!lrcArray)lrcArray=await fetchLyricsFromLRCLIB(song.name,song.artist.split(',')[0].split('/')[0]);if(lrcArray)window.lyricsData[song.name]=lrcArray;playlist.push({title:song.name,artist:song.artist||"未知艺术家",duration:0,url:secureUrl,cover:coverUrl||''});window.triggerIsland("已添加: "+song.name);window.loadTrack(playlist.length-1);searchResults.innerHTML='';searchResults.classList.remove("has-results");setTimeout(function(){window.togglePlay();},500);}catch(error){searchResults.innerHTML='<div class="search-no-results">播放失败: '+error.message+'</div>';}};
+        async function tryFetchUrlGD(songId,source){try{var r=await fetch(GD_API+"?types=url&source="+source+"&id="+encodeURIComponent(songId)+"&br=320"),d=await r.json();if(d.url)return d.url.replace(/^http:\/\//i,'https://');}catch(e){}return null;}
+        async function fetchLyricsFromLRCLIB(title,artist){try{var r=await fetch('https://lrclib.net/api/search?q='+encodeURIComponent(title+' '+artist));if(!r.ok)return null;var data=await r.json();if(!data||!data.length)return null;var best=data.find(function(i){return i.syncedLyrics;})||data[0];if(best.syncedLyrics)return parseLRC(best.syncedLyrics);}catch(e){}return null;}
+        async function addDirectMusicLink(url){var fn=url.split('/').pop().split('?')[0].replace(/\.[^/.]+$/,"");playlist.push({title:fn||"未知歌曲",artist:"网络音乐",duration:0,url:url});window.triggerIsland("已添加: "+fn);window.loadTrack(playlist.length-1);setTimeout(function(){window.togglePlay();},500);}
+        async function handleNeteaseLink(url){var m1=url.match(/song\?id=(\d+)/),m2=url.match(/\/song\/(\d+)/),songId=m1?m1[1]:(m2?m2[1]:null);if(!songId)throw new Error("无法从链接中提取歌曲ID");window.triggerIsland("🎵 正在加载歌曲...");try{var sr=await fetch(LESOU_BASE+'/api/song?id='+songId+'&type=wy'),sd=await sr.json();if(sd.code===1&&sd.data&&sd.data.url){playlist.push({title:sd.data.name||"网易云歌曲",artist:sd.data.artist||"未知歌手",duration:0,url:sd.data.url,cover:sd.data.pic||''});window.triggerIsland("已添加: "+(sd.data.name||"网易云歌曲"));window.loadTrack(playlist.length-1);setTimeout(function(){window.togglePlay();},500);return;}}catch(e){}throw new Error("无法加载该网易云歌曲");}
+        function parseLRC(lrcText){var lines=lrcText.split(/\r?\n/),lyrics=[];for(var i=0;i<lines.length;i++){var tl=lines[i].trim();if(!tl||tl.startsWith('[ti:')||tl.startsWith('[ar:')||tl.startsWith('[al:')||tl.startsWith('[by:'))continue;var tr=/\[(\d{2}):(\d{2})[\.\:](\d{2,3})\]/g,matches=Array.from(tl.matchAll(tr));if(!matches.length)continue;var text=tl.replace(tr,'').trim();if(!text)continue;for(var m=0;m<matches.length;m++){var time=parseInt(matches[m][1])*60+parseInt(matches[m][2])+parseInt(matches[m][3].padEnd(3,'0'))/1000;if(!isNaN(time)&&time>=0)lyrics.push({time:time,text:text});}}lyrics.sort(function(a,b){return a.time-b.time;});return lyrics;}
+        window.parseLRC=parseLRC;
+        document.getElementById("btnUploadLyrics").addEventListener("click",function(){document.getElementById("lyricsFileInput").click();});
+        document.getElementById("lyricsFileInput").addEventListener("change",function(e){var file=e.target.files[0];if(file){var reader=new FileReader();reader.onload=function(ev){var content=ev.target.result;if(!content||!/\[\d{2}:\d{2}[\.\:]\d{2,3}\]/.test(content)){window.triggerIsland("无效的歌词格式");return;}var lyrics=parseLRC(content);if(!lyrics||!lyrics.length){window.triggerIsland("未能解析歌词内容");return;}var sn=file.name.replace(/\.[^/.]+$/,"");window.lyricsData[sn]=lyrics;window.triggerIsland("歌词已上传: "+sn);};reader.readAsText(file);e.target.value='';}});
+      })();
+
+      // ===== 初始化 =====
+      (function(){
+        window.updateClock();
+        setInterval(window.updateClock,1000);
+        window.initBatteryMonitor();
+        window.loadTrack(0);
+      })();
+
+      // ===== 时钟指针 =====
+      function updateClockHands(){
+        var now=new Date(),h=now.getHours()%12,m=now.getMinutes(),s=now.getSeconds();
+        var hd=(h*30)+(m*0.5),md=(m*6)+(s*0.1),sd=s*6;
+        var hh=document.getElementById('clockHourHand'),mh=document.getElementById('clockMinHand'),sh=document.getElementById('clockSecHand'),st=document.getElementById('clockSecTail');
+        if(hh)hh.style.transform='translateX(-50%) rotate('+hd+'deg)';
+        if(mh)mh.style.transform='translateX(-50%) rotate('+md+'deg)';
+        if(sh)sh.style.transform='translateX(-50%) rotate('+sd+'deg)';
+        if(st)st.style.transform='translateX(-50%) rotate('+sd+'deg)';
+      }
+      updateClockHands();
+      setInterval(updateClockHands,1000);
+
+      // ===== 时钟表盘刻度（JS生成12刻度+数字）=====
+      function initClockFace(){
+        var face=document.getElementById('clockFace');
+        if(!face)return;
+        // 12个刻度
+        for(var i=0;i<12;i++){
+          var isMain=(i%3===0);
+          var wrapper=document.createElement('div');
+          wrapper.style.cssText='position:absolute;inset:0;border-radius:50%;transform:rotate('+(i*30)+'deg);pointer-events:none;';
+          var tick=document.createElement('div');
+          tick.style.cssText='position:absolute;left:50%;top:'+(isMain?'4%':'5.5%')+';width:'+(isMain?'2.5px':'1.5px')+';height:'+(isMain?'8%':'5%')+';background:rgba(255,255,255,'+(isMain?'0.80':'0.40')+');border-radius:1px;transform:translateX(-50%);';
+          wrapper.appendChild(tick);
+          face.appendChild(wrapper);
+        }
+        // 四个数字标记 12 3 6 9
+        var nums=[{n:12,a:0},{n:3,a:90},{n:6,a:180},{n:9,a:270}];
+        nums.forEach(function(item){
+          var w=document.createElement('div');
+          w.style.cssText='position:absolute;inset:0;border-radius:50%;transform:rotate('+item.a+'deg);pointer-events:none;';
+          var label=document.createElement('div');
+          label.textContent=item.n;
+          label.style.cssText='position:absolute;left:50%;top:14%;transform:translateX(-50%) rotate(-'+item.a+'deg);font-size:7.5px;font-weight:600;color:rgba(255,255,255,0.70);line-height:1;text-shadow:0 1px 4px rgba(0,0,0,0.8);font-family:var(--font);';
+          w.appendChild(label);
+          face.appendChild(w);
+        });
+      }
+      initClockFace();
+
+      // ===== Banner日期 =====
+           function updateBannerDate(){
+        var d=new Date(),wd=['SUN','MON','TUE','WED','THU','FRI','SAT'];
+        var elWd=document.getElementById('bannerWeekday');
+        var elDn=document.getElementById('bannerDateNum');
+        if(elWd) elWd.textContent=wd[d.getDay()];
+        if(elDn) elDn.textContent=(d.getMonth()+1)+'.'+String(d.getDate()).padStart(2,'0');
+      }
+      updateBannerDate();
+
+      // ===== D-Day =====
+      document.getElementById('ddayWidgetGemini')?.addEventListener('click',function(){
+        var target=prompt('请输入目标事件名称：'),dateStr=prompt('请输入目标日期（YYYY-MM-DD）：');
+        if(target&&dateStr){var td=new Date(dateStr),today=new Date();today.setHours(0,0,0,0);var diff=Math.round((td-today)/(1000*60*60*24));document.getElementById('ddayTargetGemini').textContent=target;document.getElementById('ddayNumGemini').textContent=Math.abs(diff);window.triggerIsland(diff>=0?('距 '+target+' 还有 '+diff+' 天'):('已过 '+Math.abs(diff)+' 天'));}
+      });
+      document.getElementById('appIconDdayGemini')?.addEventListener('click',function(){window.triggerIsland('倒数日功能即将上线 🌸');});
+      document.getElementById('dockMusicIcon')?.addEventListener('click',function(){
+        var st=document.getElementById('sliderTrack'),dots=document.getElementById('pageIndicator').querySelectorAll('.dot-gemini');
+        st.style.transition='transform 400ms cubic-bezier(0.32,0.72,0,1)';
+        st.style.transform='translateX(-66.666%)';
+        dots.forEach(function(d,i){d.classList.toggle('active',i===2);});
+      });
+                    // ===== 视频开屏 + 配乐控制 =====
+      (function(){
+        var splash = document.getElementById('bootSplash');
+        var video = document.getElementById('bootVideo');
+        var audio = document.getElementById('bootAudio');
+        var skipBtn = document.getElementById('bootSkip');
+        var startOverlay = document.getElementById('bootStartOverlay');
+        var startBtn = document.getElementById('bootStartBtn');
+        if (!splash || !video) return;
+
+        var dismissed = false;
+
+        // 关闭开屏动画
+        function dismissSplash() {
+          if (dismissed) return;
+          dismissed = true;
+          video.pause();
+          splash.classList.add('fade-out');
+          setTimeout(function() { splash.classList.add('hidden'); }, 800);
+          // 音乐继续播放，不停止
+        }
+
+        // 用户点击 ENTER → 播放视频 + 音乐
+        function handleStart() {
+          // 隐藏开始遮罩
+          startOverlay.classList.add('hidden');
+          // 显示 Skip 按钮
+          if (skipBtn) skipBtn.style.display = 'block';
+          // 播放音乐（此时用户已经点击过了，浏览器允许播放）
+          if (audio) {
+            audio.volume = 0.6;
+            audio.play().catch(function(){});
+          }
+          // 播放视频（非静音，但视频本身可能没有音轨）
+          video.play().catch(function(){});
+        }
+
+        // 绑定开始按钮（同时支持 click，电脑和手机都能用）
+        if (startBtn) startBtn.addEventListener('click', handleStart);
+        if (startOverlay) startOverlay.addEventListener('click', handleStart);
+
+        // Skip 按钮
+        if (skipBtn) {
+          skipBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            dismissSplash();
+          });
+        }
+
+        // 视频播完后自动消失
+        video.addEventListener('ended', function() {
+          dismissSplash();
+        });
+
+        // 容错：视频加载失败
+        video.addEventListener('error', function() {
+          dismissSplash();
+        });
+
+        // 最多等 20 秒强制跳过（从点击开始算）
+        if (startBtn) {
+          startBtn.addEventListener('click', function() {
+            setTimeout(function() { dismissSplash(); }, 20000);
+          });
+        }
+      })();
+    </script>
+  </body>
+</html>
