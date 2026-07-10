@@ -636,38 +636,27 @@
   </head>
   <body>
     <main class="phone-shell" id="phoneShell">
-                 <!-- ✨ 视频开屏动画 + 配乐 -->
+      <!-- ✨ 视频开屏动画 + 配乐 -->
       <div class="boot-splash" id="bootSplash">
-        <!-- 开始按钮遮罩（最先显示） -->
+        <!-- 开始按钮遮罩（最先显示，排版和之前一模一样） -->
         <div class="boot-start-overlay" id="bootStartOverlay">
           <div class="boot-start-logo">𓆩 Angel 𓆪</div>
           <div class="boot-start-btn" id="bootStartBtn">ENTER</div>
           <div class="boot-start-hint">tap to begin</div>
         </div>
-        <!-- 视频（初始暂停，等用户点击后播放） -->
+        
+        <!-- 视频：只要把长链接换成简单的文件名即可，它依然受 .boot-video 的 75% 尺寸控制 -->
         <video class="boot-video" id="bootVideo"
           playsinline webkit-playsinline
-          src="https://img.baibai.cv/f/EEA7IX/IMG_7385.MP4">
+          src="IMG_7385.MP4">
         </video>
-        <!-- 背景音乐 -->
+        
+        <!-- 背景音乐：换成简单的文件名 -->
         <audio id="bootAudio" preload="auto" loop
-          src="https://img.baibai.cv/f/Z8rmiV/M800004YJX0a2I3Qnu.mp3">
+          src="您的音乐文件名.mp3">
         </audio>
+        
         <div class="boot-skip" id="bootSkip" style="display:none;">SKIP ›</div>
-      </div>
-
-      <div class="status-bar" id="statusBar">
-        <span class="status-time" id="statusTime">10:32</span>
-        <div class="status-right">
-          <div class="icon-signal"><span></span><span></span><span></span></div>
-          <span class="battery-percent" id="batteryPercent">95%</span>
-          <div class="battery-container">
-            <span class="charging-indicator" id="chargingIndicator">
-              <svg viewBox="0 0 24 24" width="8" height="8"><path d="M12 2V4M12 20V22M4.93 4.93L6.34 6.34M17.66 17.66L19.07 19.07M2 12H4M20 12H22M6.34 17.66L4.93 19.07M19.07 4.93L17.66 6.34" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </span>
-            <div class="icon-battery"><div class="battery-core" id="batteryCore"></div></div>
-          </div>
-        </div>
       </div>
 
       <!-- 锁屏 - transparent背景，壁纸透出 -->
