@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>ANGEL</title>
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
@@ -264,7 +264,7 @@
 
       /* ===== Slider ===== */
       .slider-viewport-gemini { width: 100%; flex: 1; overflow: hidden; position: relative; }
-      .slider-track-gemini { display: flex; width: 300%; height: 100%; will-change: transform; transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
+      .slider-track-gemini { display: flex; width: 300%; height: 100%; will-change: transform; transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); transform: translateX(-33.333%); }
       .home-page-gemini { width: 33.333%; height: 100%; display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden; }
       .home-page-gemini::-webkit-scrollbar { display: none; }
 
@@ -651,13 +651,16 @@
           src="IMG_7385.MP4">
         </video>
         
-        <!-- 背景音乐：换成简单的文件名 -->
+        <!-- 背景音乐：请将 src 替换为真实音频文件路径，留空则静音播放 -->
         <audio id="bootAudio" preload="auto" loop
-          src="您的音乐文件名.mp3">
+          src="https://img.baibai.cv/f/Z8rmiV/M800004YJX0a2I3Qnu.mp3">
         </audio>
         
         <div class="boot-skip" id="bootSkip" style="display:none;">SKIP ›</div>
       </div>
+
+      <!-- Dynamic Island -->
+      <div class="dynamic-island" id="dynamicIsland"><span class="island-content" id="islandContent"></span></div>
 
       <!-- 锁屏 - transparent背景，壁纸透出 -->
       <section class="screen lock-screen is-active" id="lockScreen">
@@ -697,7 +700,7 @@
       </section>
 
       <!-- 主屏 -->
-      <section class="screen home-screen" id="homeScreen">
+<section class="screen home-screen" id="homeScreen">
         <div class="slider-viewport-gemini" id="sliderViewport">
           <div class="slider-track-gemini" id="sliderTrack">
 
@@ -770,14 +773,14 @@
                         <!-- 白光光环 -->
                         <div style="position: absolute; top: -16px; left: 50%; transform: translateX(-50%); width: 44px; height: 12px; border: 3px solid rgba(255, 255, 255, 1); border-radius: 50%; box-shadow: 0 0 15px rgba(255, 255, 255, 1), inset 0 0 10px rgba(255, 255, 255, 0.9);"></div>
                         <!-- 头像 -->
-                        <div style="width: 76px; height: 76px; border-radius: 50%; background: rgba(255,255,255,0.9); display: flex; align-items: center; justify-content: center; border: 3px solid #fff; box-shadow: 0 8px 20px rgba(0,0,0,0.06);">
-                           <span style="font-size: 32px;">🤍</span>
+                        <div style="width: 76px; height: 76px; border-radius: 50%; overflow: hidden; border: 3px solid rgba(255,255,255,0.9); box-shadow: 0 8px 20px rgba(0,0,0,0.06), inset 0 1px 6px rgba(255,255,255,0.5);">
+                           <img src="https://img.baibai.cv/f/2bdAUX/IMG_1959.JPG" style="width: 100%; height: 100%; object-fit: cover; display: block;" alt="avatar">
                         </div>
                       </div>
                       <span style="font-size: 54px; transform: translateY(-2px); filter: grayscale(1) brightness(1.2) drop-shadow(0 0 8px rgba(255,255,255,1)); opacity: 0.85;">🪽</span>
                     </div>
                     
-                    <div style="font-size: 16px; color: #666; text-align: center; font-weight: 500; letter-spacing: 0.5px;">
+                    <div style="font-size: 16px; color: rgba(120,115,130,0.72); text-align: center; font-weight: 500; letter-spacing: 0.5px; text-shadow: 0 1px 3px rgba(255,255,255,0.6);">
                       𓆩⁺₊⋆ 𝓐𝓷𝓰𝓮𝓵 𝓕𝓪𝓷𝓽𝓪𝓼𝔂 ⋆⁺₊🪽 𓆪
                     </div>
                   </div>
@@ -855,8 +858,8 @@
         </div>
 
         <div class="page-indicator-gemini" id="pageIndicator">
-          <div class="dot-gemini active"></div>
           <div class="dot-gemini"></div>
+          <div class="dot-gemini active"></div>
           <div class="dot-gemini"></div>
         </div>
 
@@ -870,67 +873,118 @@
         <div class="bottom-signature">─ 花より美しく　星より輝く ─</div>
       </section>
 
-           <!-- ===== 统一 Settings 面板 ===== -->
+             <!-- ===== iOS 风格 Settings 面板 ===== -->
       <div class="app-full-window" id="settingsPanel">
-        <div class="app-window-header">
-          <div class="app-window-title">Settings</div>
-          <button class="btn-close-window" id="btnSettingsClose">关闭</button>
+        <div class="app-window-header" style="background: rgba(255,255,255,0.12); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.1); padding: 16px 20px; display: flex; align-items: center; justify-content: space-between;">
+          <button class="btn-close-window" id="btnSettingsClose" style="background: none; border: none; color: rgba(255,255,255,0.6); font-size: 13px; cursor: pointer; padding: 4px 8px; border-radius: 8px;">‹ 返回</button>
+          <div class="app-window-title" style="font-size: 15px; font-weight: 700; color: #fff; letter-spacing: -0.3px;">设置</div>
+          <div style="width: 40px;"></div>
         </div>
-        <div class="window-content" style="overflow-y: auto; flex: 1;">
 
-          <!-- 🔒 锁屏开关 -->
-          <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 16px; margin-bottom: 14px;">
+        <div class="window-content" style="overflow-y: auto; flex: 1; padding: 20px 16px; background: transparent;">
+
+          <!-- 个人账户卡片 -->
+          <div style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); border-radius: 20px; padding: 16px; margin-bottom: 24px; display: flex; align-items: center; gap: 14px;">
+            <div style="width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, rgba(200,180,240,0.5), rgba(160,140,200,0.3)); border: 2px solid rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0;">🤍</div>
             <div>
-              <div style="font-size: 13px; font-weight: 600; color: #fff;">锁屏界面</div>
-              <div style="font-size: 10px; color: rgba(255,255,255,0.5); margin-top: 2px;">关闭后跳过锁屏直接进入桌面</div>
+              <div style="font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 3px;">Angel</div>
+              <div style="font-size: 12px; color: rgba(255,255,255,0.5);">AI 交互手机</div>
             </div>
-            <div id="lockScreenToggle" style="width: 44px; height: 24px; background: rgba(255,255,255,0.3); border-radius: 12px; position: relative; cursor: pointer; transition: background 0.3s ease;">
-              <div id="lockToggleKnob" style="position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; background: #fff; border-radius: 50%; box-shadow: 0 2px 6px rgba(0,0,0,0.2); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);"></div>
+            <div style="margin-left: auto; color: rgba(255,255,255,0.3); font-size: 16px;">›</div>
+          </div>
+
+          <!-- 分组 1：通用 -->
+          <div style="font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.4); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; padding-left: 4px;">通用</div>
+          <div style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; overflow: hidden; margin-bottom: 20px;">
+
+            <!-- 锁屏开关 -->
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; border-bottom: 1px solid rgba(255,255,255,0.07);">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 30px; height: 30px; background: linear-gradient(135deg, #636366, #48484a); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px;">🔒</div>
+                <div>
+                  <div style="font-size: 14px; font-weight: 500; color: #fff;">锁屏界面</div>
+                  <div style="font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 1px;">关闭后直接进入桌面</div>
+                </div>
+              </div>
+              <div id="lockScreenToggle" style="width: 44px; height: 24px; background: rgba(255,255,255,0.2); border-radius: 12px; position: relative; cursor: pointer; transition: background 0.3s ease; flex-shrink: 0;">
+                <div id="lockToggleKnob" style="position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; background: #fff; border-radius: 50%; box-shadow: 0 2px 6px rgba(0,0,0,0.3); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);"></div>
+              </div>
+            </div>
+
+            <!-- 壁纸 Tab 切换 -->
+            <div style="padding: 13px 16px; border-bottom: 1px solid rgba(255,255,255,0.07);">
+              <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                <div style="width: 30px; height: 30px; background: linear-gradient(135deg, #2c2c2e, #1c1c1e); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px;">🖼️</div>
+                <div style="font-size: 14px; font-weight: 500; color: #fff;">壁纸</div>
+              </div>
+              <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                <button id="tabLocal" class="is-active" style="flex: 1; padding: 8px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;">本地上传</button>
+                <button id="tabUrl" style="flex: 1; padding: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: rgba(255,255,255,0.5); font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;">网络图片</button>
+              </div>
+              <div id="groupLocal">
+                <input type="file" id="wpFileInput" accept="image/*" style="width: 100%; font-size: 12px; background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.7); padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);" />
+              </div>
+              <div id="groupUrl" style="display:none;">
+                <input type="text" id="wpUrlInput" placeholder="https://example.com/wallpaper.jpg" style="width: 100%; font-size: 12px; background: rgba(255,255,255,0.06); color: #fff; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); outline: none;" />
+              </div>
+            </div>
+
+            <!-- 字体颜色 -->
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 13px 16px;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 30px; height: 30px; background: linear-gradient(135deg, #ff6b6b, #ee5a24); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px;">🎨</div>
+                <div style="font-size: 14px; font-weight: 500; color: #fff;">字体颜色</div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <input type="text" id="fontColorHex" value="#ffffff" style="width: 70px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 6px 8px; color: #fff; font-size: 12px; text-align: center; outline: none;" />
+                <input type="color" id="fontColorPicker" value="#ffffff" style="width: 32px; height: 32px; border: none; border-radius: 8px; cursor: pointer; background: none;" />
+              </div>
             </div>
           </div>
 
-          <hr style="border:0; border-top:1px solid rgba(255,255,255,0.12); margin:14px 0;" />
-
-          <!-- 🎨 壁纸 -->
-          <div style="font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.5); margin-bottom: 8px; letter-spacing: 1px; text-transform: uppercase;">壁纸</div>
-          <div class="cute-tab-btns">
-            <button class="is-active" id="tabLocal">本地上传</button>
-            <button id="tabUrl">网络图片</button>
-          </div>
-          <div class="input-group" id="groupLocal">
-            <label>上传壁纸图片</label>
-            <input type="file" id="wpFileInput" accept="image/*" style="font-size:12px; background:rgba(255,255,255,0.10); color:white; padding:10px; border-radius:12px; width:100%; border:1px solid rgba(255,255,255,0.22);" />
-          </div>
-          <div class="input-group" id="groupUrl" style="display:none;">
-            <label>壁纸图片 URL</label>
-            <input type="text" id="wpUrlInput" placeholder="https://example.com/wallpaper.jpg" />
-          </div>
-
-          <hr style="border:0; border-top:1px solid rgba(255,255,255,0.12); margin:14px 0;" />
-
-          <!-- 🔤 字体颜色 -->
-          <div style="font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.5); margin-bottom: 8px; letter-spacing: 1px; text-transform: uppercase;">字体色调</div>
-          <div class="input-group">
-            <div class="color-pick-row">
-              <input type="color" id="fontColorPicker" value="#ffffff" />
-              <input type="text" id="fontColorHex" value="#ffffff" />
+          <!-- 分组 2：API 设置 -->
+          <div style="font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.4); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; padding-left: 4px;">API 接口</div>
+          <div style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; overflow: hidden; margin-bottom: 20px;">
+            <div style="padding: 13px 16px; border-bottom: 1px solid rgba(255,255,255,0.07);">
+              <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                <div style="width: 30px; height: 30px; background: linear-gradient(135deg, #0a84ff, #0066cc); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px;">🔗</div>
+                <div style="font-size: 14px; font-weight: 500; color: #fff;">Base URL</div>
+              </div>
+              <input type="text" id="apiBaseInput" placeholder="https://api.openai.com/v1" style="width: 100%; font-size: 12px; background: rgba(255,255,255,0.06); color: #fff; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); outline: none;" />
+            </div>
+            <div style="padding: 13px 16px;">
+              <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                <div style="width: 30px; height: 30px; background: linear-gradient(135deg, #30d158, #25a244); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px;">🔑</div>
+                <div style="font-size: 14px; font-weight: 500; color: #fff;">API Key</div>
+              </div>
+              <input type="password" id="apiKeyInput" placeholder="sk-..." style="width: 100%; font-size: 12px; background: rgba(255,255,255,0.06); color: #fff; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); outline: none;" />
             </div>
           </div>
 
-          <hr style="border:0; border-top:1px solid rgba(255,255,255,0.12); margin:14px 0;" />
+          <!-- 分组 3：关于 -->
+          <div style="font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.4); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; padding-left: 4px;">关于</div>
+          <div style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; overflow: hidden; margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; border-bottom: 1px solid rgba(255,255,255,0.07);">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 30px; height: 30px; background: linear-gradient(135deg, #bf5af2, #9b59b6); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px;">✨</div>
+                <div style="font-size: 14px; font-weight: 500; color: #fff;">版本</div>
+              </div>
+              <div style="font-size: 13px; color: rgba(255,255,255,0.4);">Angel v1.0</div>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 13px 16px;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 30px; height: 30px; background: linear-gradient(135deg, #ff9f0a, #ff6b00); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px;">🕊️</div>
+                <div style="font-size: 14px; font-weight: 500; color: #fff;">主题风格</div>
+              </div>
+              <div style="font-size: 13px; color: rgba(255,255,255,0.4);">Angel Fantasy</div>
+            </div>
+          </div>
 
-          <!-- ⚙️ API -->
-          <div style="font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.5); margin-bottom: 8px; letter-spacing: 1px; text-transform: uppercase;">API 接口</div>
-          <div class="input-group"><label>API Base URL</label><input type="text" id="apiBaseInput" placeholder="https://api.openai.com/v1" /></div>
-          <div class="input-group"><label>API Key</label><input type="text" id="apiKeyInput" placeholder="sk-..." /></div>
+          <!-- 保存按钮 -->
+          <button id="btnSettingsSave" style="width: 100%; padding: 14px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); border-radius: 14px; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; letter-spacing: 0.3px; backdrop-filter: blur(10px);">保存设置</button>
 
-          <hr style="border:0; border-top:1px solid rgba(255,255,255,0.12); margin:14px 0;" />
-
-          <button class="btn-apply-all" id="btnSettingsSave">保存所有设置</button>
         </div>
       </div>
-
-
     <script>
       // ===== config =====
       (function() {
@@ -956,29 +1010,39 @@
         };
         window.triggerIsland=function(text){
           var island=document.getElementById("dynamicIsland"),content=document.getElementById("islandContent");
+          if(!island||!content)return;
           island.classList.add("expanded"); content.textContent=text;
           setTimeout(function(){island.classList.remove("expanded");},2000);
         };
       })();
 
-      // ===== clock =====
+          // ===== clock =====
       (function(){
         window.updateClock=function(){
           var now=new Date();
           var timeStr=new Intl.DateTimeFormat("zh-CN",{hour:"2-digit",minute:"2-digit",hour12:false}).format(now);
-          document.getElementById("statusTime").textContent=timeStr;
-          document.getElementById("lockTime").textContent=timeStr;
+          var elST=document.getElementById("statusTime");
+          var elLT=document.getElementById("lockTime");
+          if(elST)elST.textContent=timeStr;
+          if(elLT)elLT.textContent=timeStr;
           var weekdayStr=["星期日","星期一","星期二","星期三","星期四","星期五","星期六"][now.getDay()];
           var monthStr=(now.getMonth()+1)+"月";
-          if(document.getElementById("lockDate")) document.getElementById("lockDate").textContent=monthStr+now.getDate()+"日 "+weekdayStr;
+          var elLD=document.getElementById("lockDate");
+          if(elLD)elLD.textContent=monthStr+now.getDate()+"日 "+weekdayStr;
         };
-        window.initBatteryMonitor=function(){
-          var batteryPercent=document.getElementById("batteryPercent"),batteryCore=document.getElementById("batteryCore"),chargingIndicator=document.getElementById("chargingIndicator");
+               window.initBatteryMonitor=function(){
+          var batteryPercent=document.getElementById("batteryPercent");
+          var batteryCore=document.getElementById("batteryCore");
+          var chargingIndicator=document.getElementById("chargingIndicator");
+          if(!batteryPercent||!batteryCore)return; /* ✨ 找不到元素就直接退出，不崩溃 */
           var simulatedLevel=87,simulatedCharging=false,useRealBattery=false;
           function updateBatteryUI(level,charging){
-            batteryPercent.textContent=level+"%"; batteryCore.style.width=level+"%";
-            batteryCore.classList.remove("battery-low","battery-charging"); chargingIndicator.style.display="none";
-            if(charging){batteryCore.classList.add("battery-charging");chargingIndicator.style.display="inline";}
+            if(!batteryPercent||!batteryCore)return;
+            batteryPercent.textContent=level+"%";
+            batteryCore.style.width=level+"%";
+            batteryCore.classList.remove("battery-low","battery-charging");
+            if(chargingIndicator)chargingIndicator.style.display="none";
+            if(charging){batteryCore.classList.add("battery-charging");if(chargingIndicator)chargingIndicator.style.display="inline";}
             else if(level<20){batteryCore.classList.add("battery-low");}
           }
           updateBatteryUI(simulatedLevel,simulatedCharging);
@@ -997,19 +1061,38 @@
         document.getElementById("keypad").addEventListener("touchstart",handleKeypadInput,{passive:false});
         document.getElementById("keypad").addEventListener("click",handleKeypadInput);
         function updateDots(){dots.forEach(function(dot,idx){dot.classList.toggle("filled",idx<enteredPasscode.length);});}
-        function verifyOrSetPasscode(){
-          if(!isPasswordSet()){localStorage.setItem("phone-pin-code",enteredPasscode);window.triggerIsland("密码设置成功 🌸");enteredPasscode="";updateDots();passcodeTitle.textContent="输��密码进入手机";return;}
-          if(enteredPasscode===localStorage.getItem("phone-pin-code")){passcodeScreen.classList.remove("is-active");homeScreen.classList.add("is-active");window.triggerIsland("欢迎回来 🤍");}
-          else{window.triggerIsland("密码错误");enteredPasscode="";updateDots();}
+                      function verifyOrSetPasscode(){
+          if(!isPasswordSet()){
+            localStorage.setItem("phone-pin-code",enteredPasscode);
+            window.triggerIsland("密码设置成功 🌸");
+            enteredPasscode="";
+            updateDots();
+            passcodeTitle.textContent="输入密码进入手机";
+            return;
+          }
+          if(enteredPasscode===localStorage.getItem("phone-pin-code")){
+            passcodeScreen.classList.remove("is-active");
+            if(homeScreen) homeScreen.classList.add("is-active");
+            window.triggerIsland("欢迎回来 🤍");
+          } else {
+            window.triggerIsland("密码错误");
+            enteredPasscode="";
+            updateDots();
+          }
         }
-        document.getElementById("btnDelete").addEventListener("click",function(){if(enteredPasscode.length>0){enteredPasscode=enteredPasscode.slice(0,-1);updateDots();}});
-        document.getElementById("btnForget").addEventListener("click",function(){if(confirm("重置密码？")){localStorage.removeItem("phone-pin-code");enteredPasscode="";updateDots();passcodeTitle.textContent="✨ 请设置新密码";}});
-      })();
+        document.getElementById("btnDelete").addEventListener("click",function(){
+          if(enteredPasscode.length>0){enteredPasscode=enteredPasscode.slice(0,-1);updateDots();}
+        });
+        document.getElementById("btnForget").addEventListener("click",function(){
+          if(confirm("重置密码？")){localStorage.removeItem("phone-pin-code");enteredPasscode="";updateDots();passcodeTitle.textContent="✨ 请设置新密码";}
+        });
+      })(); // ← 正确关闭 lockscreen 函数
 
       // ===== homescreen =====
       (function(){
+
         var phoneShell=document.getElementById("phoneShell"),sliderViewport=document.getElementById("sliderViewport"),sliderTrack=document.getElementById("sliderTrack"),indicatorDots=document.querySelectorAll(".dot-gemini");
-        var currentPage=0,isSliderDragging=false,startTrackX=0,startTimestamp=0,lastTrackX=0,velocity=0,startTransform=0;
+        var currentPage=1,isSliderDragging=false,startTrackX=0,startTimestamp=0,lastTrackX=0,velocity=0,startTransform=0;
         function getVW(){return sliderViewport.getBoundingClientRect().width;}
         function updateTrackTransform(p){sliderTrack.style.transform="translateX("+Math.max(-66.666,Math.min(0,p))+"%)"; }
         function handleDragStart(e){if(e.target.closest(".app-main-icon"))return;var cx=e.type.includes("touch")?e.touches[0].clientX:e.clientX;startTrackX=cx;lastTrackX=cx;startTimestamp=Date.now();startTransform=-currentPage*33.333;isSliderDragging=true;sliderTrack.style.transition="none";velocity=0;}
@@ -1074,7 +1157,7 @@
       (function(){
         var audio=window.audio,playlist=window.playlist,currentTrack=window.currentTrack,isPlaying=window.isPlaying,currentTime=window.currentTime,progressInterval=window.progressInterval,animationId=window.animationId,lyricsAnimationId=window.lyricsAnimationId;
         var playerCover=document.getElementById("playerCover"),playerCoverArt=document.getElementById("playerCoverArt"),playerTitle=document.getElementById("playerTitle"),playerArtist=document.getElementById("playerArtist"),progressFill=document.getElementById("progressFill"),currentTimeEl=document.getElementById("currentTime"),totalTimeEl=document.getElementById("totalTime"),btnPlay=document.getElementById("btnPlay"),playerWave=document.getElementById("playerWave"),waveBars=playerWave.querySelectorAll(".wave-bar"),lyricsLine=document.getElementById("lyricsLine");
-        window.loadTrack=function(index){var track=playlist[index];isPlaying=false;if(progressInterval)clearInterval(progressInterval);stopLyricsUpdate();stopWaveAnimation();audio.pause();audio.src=track.url||'';audio.load();if(track.url){audio.onloadedmetadata=function(){track.duration=audio.duration;updatePlayer();};}currentTrack=index;currentTime=0;updatePlayer();lyricsLine.style.opacity='1';var lyrics=window.lyricsData[track.title]||[{time:0,text:track.title}];lyricsLine.textContent=lyrics[0].text;};
+        window.loadTrack=function(index){var track=playlist[index];isPlaying=false;if(progressInterval)clearInterval(progressInterval);stopLyricsUpdate();stopWaveAnimation();audio.pause();audio.onloadedmetadata=null;if(track.url){audio.src=track.url;audio.load();}else{audio.removeAttribute('src');}if(track.url){audio.onloadedmetadata=function(){track.duration=audio.duration;updatePlayer();};}currentTrack=index;currentTime=0;updatePlayer();lyricsLine.style.opacity='1';var lyrics=window.lyricsData[track.title]||[{time:0,text:track.title}];lyricsLine.textContent=lyrics[0].text;};
         function updatePlayer(){var track=playlist[currentTrack];playerTitle.textContent=track.title;playerArtist.textContent=track.artist;if(track.cover){playerCoverArt.style.backgroundImage="url('"+track.cover+"')";playerCoverArt.classList.remove('is-empty');}else{playerCoverArt.style.backgroundImage='';playerCoverArt.classList.add('is-empty');}var progress=track.duration>0?(currentTime/track.duration)*100:0;progressFill.style.width=progress+"%";var m=Math.floor(currentTime/60),s=Math.floor(currentTime%60);currentTimeEl.textContent=m+":"+s.toString().padStart(2,'0');var tm=Math.floor(track.duration/60),ts=Math.floor(track.duration%60);totalTimeEl.textContent=tm+":"+ts.toString().padStart(2,'0');btnPlay.innerHTML=isPlaying?'<svg viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>':'<svg viewBox="0 0 24 24"><polygon points="6,3 20,12 6,21"/></svg>';if(isPlaying){playerCover.classList.add("is-playing");playerWave.style.opacity=1;startWaveAnimation();}else{playerCover.classList.remove("is-playing");playerWave.style.opacity=0;stopWaveAnimation();}}
         window.updatePlayer=updatePlayer;
         function startLyricsUpdate(){if(lyricsAnimationId)return;function update(){if(!isPlaying){stopLyricsUpdate();return;}var track=playlist[currentTrack],lyrics=window.lyricsData[track.title]||[{time:0,text:track.title}],cl=lyrics[0];for(var i=lyrics.length-1;i>=0;i--){if(currentTime>=lyrics[i].time){cl=lyrics[i];break;}}if(lyricsLine.textContent!==cl.text){lyricsLine.style.opacity='0';lyricsLine.style.transform='translateY(8px)';setTimeout(function(){lyricsLine.textContent=cl.text;lyricsLine.style.opacity='1';lyricsLine.style.transform='translateY(0)';},150);}lyricsAnimationId=requestAnimationFrame(update);}update();}
@@ -1082,7 +1165,7 @@
         function startWaveAnimation(){if(animationId)return;function aw(){if(!isPlaying){stopWaveAnimation();return;}var h=[0.4,0.6,0.8,0.5,1,0.7,0.9,0.55,0.65];waveBars.forEach(function(bar,i){var hh=h[i]+(Math.random()*0.3-0.15);bar.style.height=(hh*20)+"px";bar.style.opacity=0.4+Math.random()*0.4;});animationId=requestAnimationFrame(aw);}aw();}
         function stopWaveAnimation(){if(animationId){cancelAnimationFrame(animationId);animationId=null;}}
         window.startLyricsUpdate=startLyricsUpdate;window.stopLyricsUpdate=stopLyricsUpdate;window.startWaveAnimation=startWaveAnimation;window.stopWaveAnimation=stopWaveAnimation;
-        window.togglePlay=async function(){var track=playlist[currentTrack];if(isPlaying){audio.pause();isPlaying=false;clearInterval(progressInterval);stopLyricsUpdate();}else{if(track.url){try{if(audio.readyState<2){await new Promise(function(resolve,reject){var oc=function(){cleanup();resolve();},oe=function(){cleanup();reject(new Error('音频加载失败'));},cleanup=function(){audio.removeEventListener('canplay',oc);audio.removeEventListener('error',oe);};audio.addEventListener('canplay',oc);audio.addEventListener('error',oe);audio.load();});}await audio.play();isPlaying=true;startProgressUpdate();startLyricsUpdate();}catch(e){window.triggerIsland("播放失败: "+(e.message||'请检查网络'));isPlaying=false;return;}}else{isPlaying=true;startProgressUpdate();startLyricsUpdate();}}updatePlayer();};
+        window.togglePlay=async function(){var track=playlist[currentTrack];if(isPlaying){audio.pause();isPlaying=false;clearInterval(progressInterval);stopLyricsUpdate();}else{if(track.url){try{if(audio.error||audio.src.indexOf(track.url)===-1){audio.removeAttribute('src');audio.load();audio.src=track.url;audio.load();}if(audio.readyState<2){await new Promise(function(resolve,reject){var oc=function(){cleanup();resolve();},oe=function(){cleanup();reject(new Error('音频加载失败'));},cleanup=function(){audio.removeEventListener('canplay',oc);audio.removeEventListener('error',oe);};audio.addEventListener('canplay',oc);audio.addEventListener('error',oe);});}await audio.play();isPlaying=true;startProgressUpdate();startLyricsUpdate();}catch(e){window.triggerIsland("播放失败: "+(e.message||'请检查网络'));isPlaying=false;return;}}else{isPlaying=true;startProgressUpdate();startLyricsUpdate();}}updatePlayer();};
         function startProgressUpdate(){if(progressInterval)clearInterval(progressInterval);if(playlist[currentTrack].url){progressInterval=setInterval(function(){if(audio.readyState>=1){currentTime=audio.currentTime;updatePlayer();if(audio.ended)window.nextTrack();}},100);}else{progressInterval=setInterval(function(){currentTime++;if(currentTime>=playlist[currentTrack].duration)window.nextTrack();updatePlayer();},1000);}}
         window.nextTrack=function(){currentTrack=(currentTrack+1)%playlist.length;window.loadTrack(currentTrack);if(isPlaying)setTimeout(function(){window.togglePlay();},100);};
         window.prevTrack=function(){currentTrack=(currentTrack-1+playlist.length)%playlist.length;window.loadTrack(currentTrack);if(isPlaying)setTimeout(function(){window.togglePlay();},100);};
@@ -1187,72 +1270,49 @@
         st.style.transform='translateX(-66.666%)';
         dots.forEach(function(d,i){d.classList.toggle('active',i===2);});
       });
-                    // ===== 视频开屏 + 配乐控制 =====
+
+      // ===== 视频开屏 + 配乐控制 =====
       (function(){
-        var splash = document.getElementById('bootSplash');
-        var video = document.getElementById('bootVideo');
-        var audio = document.getElementById('bootAudio');
-        var skipBtn = document.getElementById('bootSkip');
-        var startOverlay = document.getElementById('bootStartOverlay');
-        var startBtn = document.getElementById('bootStartBtn');
-        if (!splash || !video) return;
-
-        var dismissed = false;
-
-        // 关闭开屏动画
-        function dismissSplash() {
-          if (dismissed) return;
-          dismissed = true;
+        var splash=document.getElementById('bootSplash');
+        var video=document.getElementById('bootVideo');
+        var audio=document.getElementById('bootAudio');
+        var skipBtn=document.getElementById('bootSkip');
+        var startOverlay=document.getElementById('bootStartOverlay');
+        var startBtn=document.getElementById('bootStartBtn');
+        if(!splash||!video)return;
+        var dismissed=false;
+        function dismissSplash(){
+          if(dismissed)return;
+          dismissed=true;
           video.pause();
           splash.classList.add('fade-out');
-          setTimeout(function() { splash.classList.add('hidden'); }, 800);
-          // 音乐继续播放，不停止
+          setTimeout(function(){splash.classList.add('hidden');},800);
         }
-
-        // 用户点击 ENTER → 播放视频 + 音乐
-        function handleStart() {
-          // 隐藏开始遮罩
+        function handleStart(){
           startOverlay.classList.add('hidden');
-          // 显示 Skip 按钮
-          if (skipBtn) skipBtn.style.display = 'block';
-          // 播放音乐（此时用户已经点击过了，浏览器允许播放）
-          if (audio) {
-            audio.volume = 0.6;
-            audio.play().catch(function(){});
+          if(skipBtn)skipBtn.style.display='block';
+          // 将开场音乐注入播放器
+          var bootSrc=audio?audio.src:'';
+          if(bootSrc){
+            var existing=window.playlist.findIndex(function(t){return t.url===bootSrc;});
+            if(existing===-1){
+              window.playlist.push({title:'Angel Intro',artist:'Opening',duration:0,url:bootSrc,cover:''});
+              existing=window.playlist.length-1;
+            }
+            window.loadTrack(existing);
+            setTimeout(function(){window.togglePlay();},300);
           }
-          // 播放视频（非静音，但视频本身可能没有音轨）
+          if(audio){audio.pause();audio.currentTime=0;}
           video.play().catch(function(){});
+          setTimeout(function(){dismissSplash();},30000);
         }
-
-        // 绑定开始按钮（同时支持 click，电脑和手机都能用）
-        if (startBtn) startBtn.addEventListener('click', handleStart);
-        if (startOverlay) startOverlay.addEventListener('click', handleStart);
-
-        // Skip 按钮
-        if (skipBtn) {
-          skipBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            dismissSplash();
-          });
-        }
-
-        // 视频播完后自动消失
-        video.addEventListener('ended', function() {
-          dismissSplash();
-        });
-
-        // 容错：视频加载失败
-        video.addEventListener('error', function() {
-          dismissSplash();
-        });
-
-        // 最多等 20 秒强制跳过（从点击开始算）
-        if (startBtn) {
-          startBtn.addEventListener('click', function() {
-            setTimeout(function() { dismissSplash(); }, 20000);
-          });
-        }
+        if(startBtn)startBtn.addEventListener('click',function(e){e.stopPropagation();handleStart();});
+        if(startOverlay)startOverlay.addEventListener('click',handleStart);
+        if(skipBtn){skipBtn.addEventListener('click',function(e){e.stopPropagation();dismissSplash();});}
+        video.addEventListener('ended',function(){dismissSplash();});
+        video.addEventListener('error',function(){dismissSplash();});
       })();
+
     </script>
   </body>
 </html>
