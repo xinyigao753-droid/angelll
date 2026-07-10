@@ -648,6 +648,8 @@
         <!-- 视频：只要把长链接换成简单的文件名即可，它依然受 .boot-video 的 75% 尺寸控制 -->
         <video class="boot-video" id="bootVideo"
           playsinline webkit-playsinline
+          preload="auto"
+          muted
           src="IMG_7385.MP4">
         </video>
         
@@ -1271,7 +1273,7 @@
         dots.forEach(function(d,i){d.classList.toggle('active',i===2);});
       });
 
-      // ===== 视频开屏 + 配乐控制 =====
+      // ===== 视频开屏 + 配乐控制（移动端兼容） =====
       (function(){
         var splash=document.getElementById('bootSplash');
         var video=document.getElementById('bootVideo');
@@ -1281,17 +1283,32 @@
         var startBtn=document.getElementById('bootStartBtn');
         if(!splash||!video)return;
         var dismissed=false;
+        var started=false;
+
+        // 预加载：在用户点击前尽可能缓冲视频
+        if(video.preload!=='auto')video.preload='auto';
+        video.load();
+
+        // 音频预加载（iOS Safari 需要 user gesture 后才能 load，
+        // 但设置 preload="auto" + 显式 load() 能在支持的浏览器上提前缓冲）
+        if(audio){audio.load();}
+
         function dismissSplash(){
           if(dismissed)return;
           dismissed=true;
           video.pause();
+          if(audio){audio.pause();}
           splash.classList.add('fade-out');
           setTimeout(function(){splash.classList.add('hidden');},800);
         }
+
         function handleStart(){
+          if(started)return;
+          started=true;
           startOverlay.classList.add('hidden');
           if(skipBtn)skipBtn.style.display='block';
-          // 将开场音乐注入播放器
+
+          // ① 先将开场音乐注入播放器
           var bootSrc=audio?audio.src:'';
           if(bootSrc){
             var existing=window.playlist.findIndex(function(t){return t.url===bootSrc;});
@@ -1300,14 +1317,42 @@
               existing=window.playlist.length-1;
             }
             window.loadTrack(existing);
-            setTimeout(function(){window.togglePlay();},300);
           }
+
+          // ② 停止 bootAudio（不再独立播放，由播放器接管音频）
           if(audio){audio.pause();audio.currentTime=0;}
-          video.play().catch(function(){});
-          setTimeout(function(){dismissSplash();},20000);
+
+          // ③ 视频播放：muted 视频在移动端可 autoplay
+          //    先尝试直接播放，失败则重试
+          function tryPlayVideo(){
+            var p=video.play();
+            if(p&&p.catch){
+              p.catch(function(){
+                // iOS/Android 偶尔第一次 play() 被 AbortError 中断，
+                // 等 100ms 后重试
+                setTimeout(function(){
+                  video.play().catch(function(){});
+                },100);
+              });
+            }
+          }
+          tryPlayVideo();
+
+          // ④ 延迟启动播放器音频（给视频一点时间启动，避免同时抢占资源）
+          if(bootSrc){
+            setTimeout(function(){
+              window.togglePlay().catch(function(){});
+            },500);
+          }
+
+          // ⑤ 视频自然结束或超时后关闭
+          setTimeout(function(){dismissSplash();},30000);
         }
+
         if(startBtn)startBtn.addEventListener('click',function(e){e.stopPropagation();handleStart();});
         if(startOverlay)startOverlay.addEventListener('click',handleStart);
+        // 移动端 touch 支持（某些旧 WebView 不触发 click）
+        if(startBtn)startBtn.addEventListener('touchend',function(e){e.preventDefault();e.stopPropagation();handleStart();},{passive:false});
         if(skipBtn){skipBtn.addEventListener('click',function(e){e.stopPropagation();dismissSplash();});}
         video.addEventListener('ended',function(){dismissSplash();});
         video.addEventListener('error',function(){dismissSplash();});
