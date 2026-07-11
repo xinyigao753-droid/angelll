@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="apple-mobile-web-app-title" content="ANGEL" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕊️</text></svg>">
     <title>ANGEL</title>
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
@@ -20,10 +24,16 @@
       * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
 
       body {
-        height: 100vh; display: grid; place-items: center;
+        height: 100vh; height: 100dvh; display: grid; place-items: center;
         background: radial-gradient(ellipse at 30% 40%, #18082e 0%, #080814 55%, #100820 100%);
         font-family: var(--font); -webkit-font-smoothing: antialiased;
         overflow: hidden; color: var(--ink);
+      }
+      /* standalone 模式适配（添加到主屏幕后） */
+      @media (display-mode: standalone) {
+        body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+        .phone-shell { width: 100vw; height: 100dvh; border-radius: 0; border: 0; box-shadow: none; }
+        .boot-splash { padding-top: env(safe-area-inset-top); }
       }
                /* ===== 视频开屏动画 ===== */
       .boot-splash {
@@ -632,6 +642,23 @@
 .icon-app-20 { background-image: url('https://img.baibai.cv/f/BQg4iX/smartslice_20.png') !important; }
 
       @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+      /* ===== 加载状态 ===== */
+      .boot-loading-bar {
+        width: 160px; height: 3px; background: rgba(255,255,255,0.12);
+        border-radius: 2px; overflow: hidden; transition: opacity 0.4s;
+      }
+      .boot-loading-bar.done { opacity: 0; }
+      .boot-loading-fill {
+        height: 100%; width: 0%; border-radius: 2px;
+        background: linear-gradient(90deg, rgba(255,255,255,0.5), rgba(255,255,255,0.8));
+        transition: width 0.3s ease;
+      }
+      .boot-loading-text {
+        font-size: 10px; color: rgba(255,255,255,0.3); letter-spacing: 1.5px;
+        transition: opacity 0.4s; white-space: nowrap; min-height: 14px;
+      }
+      .boot-loading-text.done { opacity: 0; }
    </style>
   </head>
   <body>
@@ -641,8 +668,10 @@
         <!-- 开始按钮遮罩（最先显示，排版和之前一模一样） -->
         <div class="boot-start-overlay" id="bootStartOverlay">
           <div class="boot-start-logo">𓆩 Angel 𓆪</div>
-          <div class="boot-start-btn" id="bootStartBtn">ENTER</div>
-          <div class="boot-start-hint">tap to begin</div>
+          <div class="boot-loading-bar" id="bootLoadingBar"><div class="boot-loading-fill" id="bootLoadingFill"></div></div>
+          <div class="boot-loading-text" id="bootLoadingText">Preparing...</div>
+          <div class="boot-start-btn" id="bootStartBtn" style="opacity:0.3;pointer-events:none;animation:none;">ENTER</div>
+          <div class="boot-start-hint" id="bootStartHint" style="opacity:0;">tap to begin</div>
         </div>
         
         <!-- 视频：只要把长链接换成简单的文件名即可，它依然受 .boot-video 的 75% 尺寸控制 -->
@@ -1273,7 +1302,7 @@
         dots.forEach(function(d,i){d.classList.toggle('active',i===2);});
       });
 
-      // ===== 视频开屏 + 配乐控制（移动端兼容） =====
+      // ===== 视频开屏 + 配乐控制（移动端同步 + 预加载） =====
       (function(){
         var splash=document.getElementById('bootSplash');
         var video=document.getElementById('bootVideo');
@@ -1281,18 +1310,104 @@
         var skipBtn=document.getElementById('bootSkip');
         var startOverlay=document.getElementById('bootStartOverlay');
         var startBtn=document.getElementById('bootStartBtn');
+        var loadingBar=document.getElementById('bootLoadingBar');
+        var loadingFill=document.getElementById('bootLoadingFill');
+        var loadingText=document.getElementById('bootLoadingText');
         if(!splash||!video)return;
         var dismissed=false;
         var started=false;
+        var videoReady=false;
+        var audioReady=false;
 
-        // 预加载：在用户点击前尽可能缓冲视频
+        // ---- 预加载阶段 ----
+        function showLoading(pct,msg){
+          if(loadingFill)loadingFill.style.width=pct+'%';
+          if(loadingText)loadingText.textContent=msg;
+        }
+        function hideLoading(){
+          if(loadingBar)loadingBar.classList.add('done');
+          if(loadingText)loadingText.classList.add('done');
+        }
+
+        // 用 XHR 预缓冲音频（可追踪进度），保留原始 URL 给播放器使用
+        var audioUrl=audio?audio.src:'';
+        var audioOriginalUrl=audioUrl; // 保存原始外链 URL
+        if(audioUrl){
+          showLoading(0,'Loading music...');
+          var xhr=new XMLHttpRequest();
+          xhr.open('GET',audioUrl,true);
+          xhr.responseType='blob';
+          xhr.onprogress=function(e){
+            if(e.lengthComputable){
+              var pct=Math.round((e.loaded/e.total)*50);
+              showLoading(pct,'Loading music... '+pct+'%');
+            }
+          };
+          xhr.onload=function(){
+            audioReady=true;
+            checkAllReady();
+          };
+          xhr.onerror=function(){
+            audioReady=true;
+            checkAllReady();
+          };
+          xhr.send();
+        }else{
+          audioReady=true;
+        }
+
+        // 视频缓冲监听
         if(video.preload!=='auto')video.preload='auto';
         video.load();
+        function onVideoProgress(){
+          if(videoReady)return;
+          try{
+            var buf=video.buffered;
+            if(buf&&buf.length>0){
+              var end=buf.end(buf.length-1);
+              var dur=video.duration||1;
+              var pct=Math.round((end/dur)*50)+50;
+              showLoading(Math.min(pct,99),'Loading video... '+Math.min(pct,99)+'%');
+              if(end>=dur*0.9){
+                videoReady=true;
+                checkAllReady();
+              }
+            }
+          }catch(e){}
+        }
+        video.addEventListener('progress',onVideoProgress);
+        video.addEventListener('canplaythrough',function(){
+          if(videoReady)return;
+          videoReady=true;
+          checkAllReady();
+        });
+        // 视频加载出错也放行（可能无视频，不阻塞）
+        video.addEventListener('error',function(){
+          if(!videoReady){videoReady=true;checkAllReady();}
+        });
+        // 安全超时：8秒后强制就绪，不无限等待
+        setTimeout(function(){
+          if(!videoReady){videoReady=true;checkAllReady();}
+          if(!audioReady){audioReady=true;checkAllReady();}
+        },8000);
 
-        // 音频预加载（iOS Safari 需要 user gesture 后才能 load，
-        // 但设置 preload="auto" + 显式 load() 能在支持的浏览器上提前缓冲）
-        if(audio){audio.load();}
+        function checkAllReady(){
+          if(!videoReady||!audioReady)return;
+          showLoading(100,'Ready');
+          setTimeout(function(){
+            hideLoading();
+            // 激活 ENTER 按钮
+            if(startBtn){
+              startBtn.style.opacity='1';
+              startBtn.style.pointerEvents='auto';
+              startBtn.style.animation='btnPulse 2s ease-in-out infinite';
+            }
+            var hint=document.getElementById('bootStartHint');
+            if(hint)hint.style.opacity='1';
+          },400);
+        }
 
+        // ---- 播放控制 ----
         function dismissSplash(){
           if(dismissed)return;
           dismissed=true;
@@ -1308,12 +1423,11 @@
           startOverlay.classList.add('hidden');
           if(skipBtn)skipBtn.style.display='block';
 
-          // ① 先将开场音乐注入播放器
-          var bootSrc=audio?audio.src:'';
-          if(bootSrc){
-            var existing=window.playlist.findIndex(function(t){return t.url===bootSrc;});
+          // ① 将开场音乐注入播放器（使用原始外链 URL，不用 blob）
+          if(audioOriginalUrl){
+            var existing=window.playlist.findIndex(function(t){return t.url===audioOriginalUrl;});
             if(existing===-1){
-              window.playlist.push({title:'Angel Intro',artist:'Opening',duration:0,url:bootSrc,cover:''});
+              window.playlist.push({title:'Angel Intro',artist:'Opening',duration:0,url:audioOriginalUrl,cover:''});
               existing=window.playlist.length-1;
             }
             window.loadTrack(existing);
@@ -1322,40 +1436,43 @@
           // ② 停止 bootAudio（不再独立播放，由播放器接管音频）
           if(audio){audio.pause();audio.currentTime=0;}
 
-          // ③ 视频播放：muted 视频在移动端可 autoplay
-          //    先尝试直接播放，失败则重试
+          // ③ 视频播放：muted 视频在移动端可 autoplay，带重试
           function tryPlayVideo(){
             var p=video.play();
             if(p&&p.catch){
               p.catch(function(){
-                // iOS/Android 偶尔第一次 play() 被 AbortError 中断，
-                // 等 100ms 后重试
-                setTimeout(function(){
-                  video.play().catch(function(){});
-                },100);
+                setTimeout(function(){video.play().catch(function(){});},100);
               });
             }
           }
           tryPlayVideo();
 
-          // ④ 延迟启动播放器音频（给视频一点时间启动，避免同时抢占资源）
-          if(bootSrc){
-            setTimeout(function(){
+          // ④ 视频首帧渲染后启动音频（保证同步：视觉先到，音频紧跟）
+          function startAudio(){
+            if(audioOriginalUrl){
               window.togglePlay().catch(function(){});
-            },500);
+            }
+          }
+          // 用 requestVideoFrameCallback（如果可用）或 timeupdate 精确等待视频首帧
+          if('requestVideoFrameCallback' in video){
+            video.requestVideoFrameCallback(function(){startAudio();});
+          }else{
+            video.addEventListener('timeupdate',function handler(){
+              video.removeEventListener('timeupdate',handler);
+              startAudio();
+            });
           }
 
-          // ⑤ 视频自然结束或超时后关闭
+          // ⑤ 超时关闭
           setTimeout(function(){dismissSplash();},30000);
         }
 
         if(startBtn)startBtn.addEventListener('click',function(e){e.stopPropagation();handleStart();});
         if(startOverlay)startOverlay.addEventListener('click',handleStart);
-        // 移动端 touch 支持（某些旧 WebView 不触发 click）
         if(startBtn)startBtn.addEventListener('touchend',function(e){e.preventDefault();e.stopPropagation();handleStart();},{passive:false});
         if(skipBtn){skipBtn.addEventListener('click',function(e){e.stopPropagation();dismissSplash();});}
         video.addEventListener('ended',function(){dismissSplash();});
-        video.addEventListener('error',function(){dismissSplash();});
+        video.addEventListener('error',function(){if(!dismissed)dismissSplash();});
       })();
 
     </script>
